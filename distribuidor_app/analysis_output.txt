@@ -1,0 +1,16 @@
+Analyzing distribuidor_app...                                   
+
+  error - Expected to find ';' - lib\main.dart:39:41 - expected_token
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\login_screen.dart:66:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\orders_screen.dart:170:52 - deprecated_member_use
+  error - Target of URI doesn't exist: 'package:latlong2/latlong2.dart' - lib\screens\preventista\clients_screen.dart:4:8 - uri_does_not_exist
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\preventista\clients_screen.dart:119:27 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\screens\preventista\clients_screen.dart:218:7 - curly_braces_in_flow_control_structures
+   info - 'center' is deprecated and shouldn't be used. Prefer `initialCenter` instead. This option has been renamed to clarify its meaning. This option is deprecated since v6 - lib\screens\preventista\clients_screen.dart:365:29 - deprecated_member_use
+  error - The method 'LatLng' isn't defined for the type '_ClientFormSheetState' - lib\screens\preventista\clients_screen.dart:366:35 - undefined_method
+  error - The name 'LatLng' isn't a class - lib\screens\preventista\clients_screen.dart:367:41 - creation_with_non_type
+   info - 'zoom' is deprecated and shouldn't be used. Prefer `initialZoom` instead. This option has been renamed to clarify its meaning. This option is deprecated since v6 - lib\screens\preventista\clients_screen.dart:368:29 - deprecated_member_use
+  error - The method 'LatLng' isn't defined for the type '_ClientFormSheetState' - lib\screens\preventista\clients_screen.dart:385:44 - undefined_method
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\preventista\preventista_orders_screen.dart:362:27 - deprecated_member_use
+
+12 issues found. (ran in 3.0s)

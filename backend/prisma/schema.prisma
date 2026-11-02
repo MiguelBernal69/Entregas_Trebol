@@ -1,0 +1,192 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [postgis]
+}
+
+enum Role {
+  admin
+  preventista
+  distribuidor
+}
+
+enum OrderStatus {
+  pendiente
+  aceptado
+  asignado
+  entregado
+  entrega_parcial
+}
+
+enum OrderAction {
+  created
+  updated
+  status_changed
+  assigned
+  delivered
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  phone     String?
+  password  String
+  role      Role
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  clientsCreated Client[]       @relation("ClientCreatedBy")
+  ordersCreated  Order[]        @relation("OrderPreventista")
+  ordersDelivery Order[]        @relation("OrderDistributor")
+  historyActions OrderHistory[]
+  regionsCreated Region[]
+
+  assignedRegions        UserRegion[]
+  distributionSessions   DistributionSession[] @relation("DistributorSessions")
+  sessionsClosedByMe     DistributionSession[] @relation("SessionClosedBy")
+  productionEntries      ProductionEntry[]
+}
+
+model Region {
+  id        Int      @id @default(autoincrement())
+  name      String
+  color     String   @default("#3B82F6")
+  createdBy Int
+  createdAt DateTime @default(now())
+
+  creator User     @relation(fields: [createdBy], references: [id])
+  clients Client[]
+  orders  Order[]
+  assignedUsers   UserRegion[]
+  polygon Unsupported("geometry(Polygon, 4326)")?
+}
+
+model Client {
+  id        Int      @id @default(autoincrement())
+  name      String
+  ownerName String
+  phone     String
+  address   String
+  latitude  Float
+  longitude Float
+  photoUrl  String?
+  regionId  Int?
+  createdBy Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  region  Region? @relation(fields: [regionId], references: [id])
+  creator User    @relation("ClientCreatedBy", fields: [createdBy], references: [id])
+  orders  Order[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  unit        String
+  category    String   @default("Categoría A")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  orderItems        OrderItem[]
+  productionEntries ProductionEntry[]
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  clientId      Int
+  preventistaId Int
+  distributorId Int?
+  regionId      Int?
+  status        OrderStatus @default(aceptado)
+  notes         String?
+  deliveredAt   DateTime?
+  discount      Float       @default(0)
+  createdAt     DateTime    @default(now())
+
+  client      Client         @relation(fields: [clientId], references: [id])
+  preventista User           @relation("OrderPreventista", fields: [preventistaId], references: [id])
+  distributor User?          @relation("OrderDistributor", fields: [distributorId], references: [id])
+  region      Region?        @relation(fields: [regionId], references: [id])
+  items       OrderItem[]
+  history     OrderHistory[]
+}
+
+model OrderItem {
+  id                Int     @id @default(autoincrement())
+  orderId           Int
+  productId         Int
+  quantity          Int
+  unitPrice         Float
+  deliveredQuantity Int?    // null = entrega completa, valor = cantidad realmente entregada
+  isBonification    Boolean @default(false) // true = bonificación, no cuenta en precio
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model UserRegion {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  regionId  Int
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  region Region @relation(fields: [regionId], references: [id])
+
+  @@unique([userId, regionId])
+}
+
+model OrderHistory {
+  id             Int          @id @default(autoincrement())
+  orderId        Int
+  changedBy      Int
+  action         OrderAction
+  previousStatus OrderStatus?
+  newStatus      OrderStatus
+  snapshotData   Json
+  createdAt      DateTime     @default(now())
+
+  order   Order @relation(fields: [orderId], references: [id])
+  changer User  @relation(fields: [changedBy], references: [id])
+}
+
+enum SessionStatus {
+  activa
+  cerrada
+}
+
+model DistributionSession {
+  id              Int           @id @default(autoincrement())
+  distributorId   Int
+  status          SessionStatus @default(activa)
+  openedAt        DateTime      @default(now())
+  closedAt        DateTime?
+  closedByAdminId Int?
+  notes           String?
+  snapshotData    Json?         // Resumen al cierre: productos vendidos, devueltos, dinero, etc.
+
+  distributor   User  @relation("DistributorSessions", fields: [distributorId], references: [id])
+  closedByAdmin User? @relation("SessionClosedBy", fields: [closedByAdminId], references: [id])
+}
+
+model ProductionEntry {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  quantity  Int
+  notes     String?
+  createdBy Int?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  creator User?   @relation(fields: [createdBy], references: [id])
+}

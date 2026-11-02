@@ -1,0 +1,4 @@
+[dotenv@17.3.1] injecting env (3) from .env -- tip: ÔÜÖ´©Å  load multiple .env files with { path: ['.env.local', '.env'] }
+Pedidos sin regi├│n: 6
+Ô£à Pedidos actualizados: 0
+ÔÜá´©Å  Pedidos sin regi├│n (cliente tampoco tiene): 6
