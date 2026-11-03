@@ -1,8 +1,8 @@
 import axios from 'axios'
 
-// En desarrollo: http://localhost:3000
+// En desarrollo: http://localhost:3001
 // En producción: ruta relativa '' para apoyarse en el proxy de Nginx (/api)
-const BACKEND_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:3000')
+const BACKEND_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:3001')
 
 const api = axios.create({
     baseURL: `${BACKEND_BASE}/api`

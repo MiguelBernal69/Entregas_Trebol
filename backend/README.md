@@ -13,7 +13,7 @@ Este es el backend del sistema de entregas, construido con **Node.js**, **Expres
 2. Copia el archivo de entorno de ejemplo para crear tu propio archivo `.env` (si existe un `.env.example`, caso contrario, crea un `.env` en la raíz de esta carpeta).
    Asegúrate de configurar correctamente la variable `DATABASE_URL` con tus credenciales de PostgreSQL.
    ```
-   DATABASE_URL="postgresql://usuario:contraseña@localhost:5432/nombre_bd?schema=public"
+   DATABASE_URL="postgresql://trebol_app:CONTRASENA@127.0.0.1:5432/bd_entregas_trebol?schema=public"
    ```
 
 ## Instalación
