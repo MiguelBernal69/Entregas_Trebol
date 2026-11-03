@@ -177,7 +177,7 @@ export const getAllOrders = async (
       preventista: { select: { id: true, name: true } },
       distributor: { select: { id: true, name: true } },
       region: { select: { id: true, name: true, color: true } },
-      items: { include: { product: { select: { id: true, name: true, category: true, unit: true, price: true } } } }
+      items: { include: { product: { select: { id: true, name: true, unit: true, price: true } } } }
     },
     orderBy: { createdAt: 'desc' },
     skip: pagination?.skip,
@@ -207,7 +207,7 @@ export const getDailyReport = async (options: {
       client: { select: { id: true, name: true } },
       items: {
         include: {
-          product: { select: { id: true, name: true, unit: true, category: true, price: true } }
+          product: { select: { id: true, name: true, unit: true, price: true } }
         }
       }
     },
@@ -233,7 +233,6 @@ export const getDailyReport = async (options: {
   const productsMap = new Map<number, {
     productId: number
     name: string
-    category: string
     unit: string
     unitPrice: number
     regularQuantity: number
@@ -281,7 +280,6 @@ export const getDailyReport = async (options: {
         productsMap.set(item.productId, {
           productId: item.productId,
           name: item.product.name,
-          category: item.product.category,
           unit: item.product.unit,
           unitPrice: isBoni ? item.product.price : item.unitPrice,
           regularQuantity: isBoni ? 0 : item.quantity,
@@ -303,7 +301,6 @@ export const getDailyReport = async (options: {
     .map(p => ({
       productId: p.productId,
       name: p.name,
-      category: p.category,
       unit: p.unit,
       bonificationQuantity: p.bonificationQuantity
     }))

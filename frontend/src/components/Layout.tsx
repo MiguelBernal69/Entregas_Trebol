@@ -25,8 +25,8 @@ export default function Layout({ children }: Props) {
     { to: '/admin/assign-regions',  label: 'Zonas', icon: '📌' },
     { to: '/admin/users',     label: 'Usuarios',    icon: '👥' },
     { to: '/admin/clients',   label: 'Clientes',    icon: '🏪' }, // ← nuevo
-    { to: '/admin/products',  label: 'Productos',   icon: '🥔' },
-    { to: '/admin/inventory', label: 'Inventario',  icon: '📈' },
+    { to: '/admin/products',  label: 'Productos',   icon: '🍀' },
+    // Inventario reservado para una futura activación; se mantiene el código.
     { to: '/admin/sessions',  label: 'Distribución', icon: '🚛' },
   ]
 
@@ -60,7 +60,7 @@ export default function Layout({ children }: Props) {
       <aside className="w-56 bg-white shadow-md flex flex-col">
         <div className="p-5 border-b">
           <div className="flex items-center justify-between">
-            <div className="text-xl font-bold text-gray-800">🥔 Pedidos</div>
+            <div className="text-xl font-bold text-gray-800">🍀 Trébol</div>
             <span className="text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded-md">
               {APP_VERSION}
             </span>
@@ -99,7 +99,7 @@ export default function Layout({ children }: Props) {
             <span>Cerrar sesión</span>
           </button>
           <div className="text-center text-[10px] text-gray-400 mt-2 font-medium">
-            Lunova Admin {APP_VERSION}
+            Distribuidora Trébol {APP_VERSION}
           </div>
         </div>
       </aside>

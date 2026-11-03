@@ -290,7 +290,7 @@ export default function AdminHistory() {
                   className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors"
                 >
                   <span>🖨️</span>
-                  <span>Imprimir Boleta Térmica (Epson / Bluetooth)</span>
+                  <span>Imprimir Boleta Térmica (impresora predeterminada)</span>
                 </button>
               </div>
             </div>

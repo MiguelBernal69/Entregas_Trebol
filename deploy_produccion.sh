@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# SCRIPT DE DESPLIEGUE A PRODUCCIÓN - Entregas Papas
+# SCRIPT DE DESPLIEGUE A PRODUCCIÓN - Distribuidora Trébol
 # 
 # Ejecutar en el SERVIDOR VPS por SSH:
 #   chmod +x deploy_produccion.sh && bash deploy_produccion.sh
@@ -13,8 +13,8 @@
 set -e  # Detener si cualquier comando falla
 
 # ===================== CONFIGURA ESTOS VALORES =====================
-APP_DIR="/ruta/al/proyecto/Entregas_Papas"  # <- Ajustar ruta real
-DB_NAME="bd_entregas"
+APP_DIR="/ruta/al/proyecto/Entregas_Trebol"  # <- Ajustar ruta real
+DB_NAME="bd_entregas_trebol"
 DB_USER="postgres"
 DB_HOST="localhost"
 DB_PASS="TU_PASSWORD_POSTGRESQL"            # <- Ajustar contraseña real
@@ -27,7 +27,7 @@ BACKUP_FILE="$BACKUP_DIR/bd_entregas_${TIMESTAMP}.dump"
 
 echo ""
 echo "========================================================"
-echo "  DESPLIEGUE A PRODUCCIÓN - Entregas Papas"
+echo "  DESPLIEGUE A PRODUCCIÓN - Distribuidora Trébol"
 echo "  $(date)"
 echo "========================================================"
 
@@ -57,21 +57,9 @@ echo "   ✅ Commit: $(git log -1 --oneline)"
 # ── PASO 3: Migración de base de datos (safe) ─────────────────────
 echo ""
 echo "🗄️  [3/7] Aplicando migración de base de datos..."
-echo "   Columnas nuevas con DEFAULT → datos existentes NO se tocan"
+echo "   Aplicando migraciones Prisma"
 
 PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" << 'MIGRATION_SQL'
--- Migración: add_bonification_discount_category
--- Usa IF NOT EXISTS → idempotente (seguro correr múltiples veces)
-
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Product' AND column_name='category') THEN
-    ALTER TABLE "Product" ADD COLUMN "category" TEXT NOT NULL DEFAULT 'Categoría A';
-    RAISE NOTICE '✅ Product.category agregado';
-  ELSE
-    RAISE NOTICE '⏩ Product.category ya existe';
-  END IF;
-END $$;
-
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Order' AND column_name='discount') THEN
     ALTER TABLE "Order" ADD COLUMN "discount" DOUBLE PRECISION NOT NULL DEFAULT 0;
@@ -105,8 +93,10 @@ echo "   ✅ npm install completado"
 # ── PASO 5: Backend → Prisma generate + build TypeScript ──────────
 echo ""
 echo "⚙️  [5/7] Compilando backend..."
+npx prisma migrate deploy
 npm run prisma:generate    # Regenerar el cliente Prisma
 npm run build              # tsc → compila a dist/
+npm run seed:admin         # Solo crea/actualiza el administrador inicial
 echo "   ✅ Backend compilado en dist/"
 
 # ── PASO 6: Frontend → npm install + build ────────────────────────

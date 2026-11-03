@@ -8,7 +8,6 @@ export const deleteProduct = async (id: number) => (await api.delete(`/products/
 export const getInventoryStats = async (params?: {
   startDate?: string
   endDate?: string
-  category?: string
   preventistaId?: number
   distributorId?: number
 }) => (await api.get('/products/inventory-stats', { params })).data
@@ -16,7 +15,6 @@ export const getInventoryStats = async (params?: {
 export const getStockBalance = async (params?: {
   startDate?: string
   endDate?: string
-  category?: string
 }) => (await api.get('/products/stock-balance', { params })).data
 
 export const getProductionEntries = async (params?: {

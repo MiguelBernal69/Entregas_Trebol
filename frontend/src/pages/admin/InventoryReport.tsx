@@ -14,7 +14,6 @@ interface ProductStat {
     name: string
     unit: string
     price: number
-    category: string
     isActive: boolean
   }
   pedidaRegular: number
@@ -48,7 +47,6 @@ interface StockProductBalance {
     name: string
     unit: string
     price: number
-    category: string
     isActive: boolean
   }
   totalProducido: number
@@ -76,7 +74,7 @@ interface ProductionEntryItem {
   quantity: number
   notes?: string
   date: string
-  product: { id: number; name: string; unit: string; category: string }
+  product: { id: number; name: string; unit: string }
   creator?: { id: number; name: string }
 }
 
@@ -88,7 +86,6 @@ export default function InventoryReport() {
   const [periodPreset, setPeriodPreset] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>('all')
   const [startDate, setStartDate] = useState<string>('')
   const [endDate, setEndDate] = useState<string>('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
 
   // Estado Pestaña 1: Ventas y Devoluciones
@@ -157,7 +154,6 @@ export default function InventoryReport() {
         const res = await getInventoryStats({
           startDate: s || undefined,
           endDate: e || undefined,
-          category: selectedCategory !== 'all' ? selectedCategory : undefined,
         })
         setStats(res.products || [])
         setSummary(res.summary || null)
@@ -166,7 +162,6 @@ export default function InventoryReport() {
           getStockBalance({
             startDate: s || undefined,
             endDate: e || undefined,
-            category: selectedCategory !== 'all' ? selectedCategory : undefined,
           }),
           getProductionEntries({ limit: 30 })
         ])
@@ -183,25 +178,14 @@ export default function InventoryReport() {
 
   useEffect(() => {
     fetchData()
-  }, [activeTab, periodPreset, selectedCategory])
-
-  // Categorías únicas
-  const categories = useMemo(() => {
-    const set = new Set<string>()
-    const list = activeTab === 'ventas' ? stats : stockBalances
-    list.forEach(s => {
-      if (s.product.category) set.add(s.product.category)
-    })
-    return Array.from(set)
-  }, [stats, stockBalances, activeTab])
+  }, [activeTab, periodPreset])
 
   // Filtrado en memoria por buscador
   const filteredSalesProducts = useMemo(() => {
     if (!searchTerm.trim()) return stats
     const term = searchTerm.toLowerCase()
     return stats.filter(s =>
-      s.product.name.toLowerCase().includes(term) ||
-      s.product.category.toLowerCase().includes(term)
+      s.product.name.toLowerCase().includes(term)
     )
   }, [stats, searchTerm])
 
@@ -209,8 +193,7 @@ export default function InventoryReport() {
     if (!searchTerm.trim()) return stockBalances
     const term = searchTerm.toLowerCase()
     return stockBalances.filter(s =>
-      s.product.name.toLowerCase().includes(term) ||
-      s.product.category.toLowerCase().includes(term)
+      s.product.name.toLowerCase().includes(term)
     )
   }, [stockBalances, searchTerm])
 
@@ -260,12 +243,11 @@ export default function InventoryReport() {
     if (activeTab === 'ventas') {
       if (filteredSalesProducts.length === 0) return
       const headers = [
-        'Producto', 'Categoría', 'Unidad', 'Precio Unit (Bs)', 'Pedidos', 'Preventa Pedida',
+        'Producto', 'Unidad', 'Precio Unit (Bs)', 'Pedidos', 'Preventa Pedida',
         'Vendidos Entregados', 'Devueltos', 'Bonificaciones Entregadas', 'En Ruta', 'Total Cobrado (Bs)'
       ]
       const rows = filteredSalesProducts.map(s => [
         `"${s.product.name.replace(/"/g, '""')}"`,
-        `"${s.product.category}"`,
         `"${s.product.unit}"`,
         s.product.price.toFixed(2),
         s.pedidosCount,
@@ -284,13 +266,12 @@ export default function InventoryReport() {
     } else {
       if (filteredStockProducts.length === 0) return
       const headers = [
-        'Producto', 'Categoría', 'Unidad', 'Total Producido / Entrada (+)',
+        'Producto', 'Unidad', 'Total Producido / Entrada (+)',
         'Ventas Entregadas (-)', 'Bonificaciones (-)', 'Devoluciones de Distribuidores (+)',
         'En Ruta (Camionetas)', 'Stock Físico en Almacén'
       ]
       const rows = filteredStockProducts.map(s => [
         `"${s.product.name.replace(/"/g, '""')}"`,
-        `"${s.product.category}"`,
         `"${s.product.unit}"`,
         s.totalProducido,
         s.totalVendidoRegular,
@@ -449,17 +430,6 @@ export default function InventoryReport() {
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={selectedCategory}
-              onChange={e => setSelectedCategory(e.target.value)}
-              className="text-xs font-bold border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white text-gray-700 outline-none"
-            >
-              <option value="all">Todas las Categorías</option>
-              {categories.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-
             <div className="relative">
               <span className="absolute left-2.5 top-2.5 text-xs text-gray-400">🔍</span>
               <input
@@ -580,7 +550,6 @@ export default function InventoryReport() {
                     <thead>
                       <tr className="bg-gray-50/80 border-b border-gray-100 text-[11px] font-black text-gray-500 uppercase tracking-wider">
                         <th className="py-3 px-4">Producto</th>
-                        <th className="py-3 px-3">Categoría</th>
                         <th className="py-3 px-3 text-center bg-blue-50/40 text-blue-800">1. Producción (+)</th>
                         <th className="py-3 px-3 text-center bg-emerald-50/40 text-emerald-800">2. Vendidos (-)</th>
                         <th className="py-3 px-3 text-center bg-purple-50/40 text-purple-800">3. Devoluciones (+)</th>
@@ -601,11 +570,6 @@ export default function InventoryReport() {
                               </div>
                             </td>
 
-                            <td className="py-3.5 px-3">
-                              <span className="inline-block bg-blue-50 text-blue-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                                {s.product.category}
-                              </span>
-                            </td>
 
                             {/* 1. Producción Ingresada */}
                             <td className="py-3.5 px-3 text-center bg-blue-50/20 font-black text-blue-700">
@@ -840,7 +804,7 @@ export default function InventoryReport() {
                 </div>
               ) : filteredSalesProducts.length === 0 ? (
                 <div className="p-16 text-center text-gray-400">
-                  <div className="text-4xl mb-3">🥔</div>
+                  <div className="text-4xl mb-3">🍀</div>
                   <p className="text-base font-bold text-gray-700">No se encontraron productos</p>
                 </div>
               ) : (
@@ -849,7 +813,6 @@ export default function InventoryReport() {
                     <thead>
                       <tr className="bg-gray-50/80 border-b border-gray-100 text-[11px] font-black text-gray-500 uppercase tracking-wider">
                         <th className="py-3 px-4">Producto</th>
-                        <th className="py-3 px-3">Categoría</th>
                         <th className="py-3 px-3 text-right">P. Unitario</th>
                         <th className="py-3 px-3 text-center">Preventa</th>
                         <th className="py-3 px-3 text-center bg-emerald-50/40 text-emerald-800">Vendidos</th>
@@ -875,11 +838,6 @@ export default function InventoryReport() {
                               </div>
                             </td>
 
-                            <td className="py-3.5 px-3">
-                              <span className="inline-block bg-blue-50 text-blue-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                                {s.product.category}
-                              </span>
-                            </td>
 
                             <td className="py-3.5 px-3 text-right font-medium text-gray-600">
                               Bs. {s.product.price.toFixed(2)}
@@ -982,7 +940,7 @@ export default function InventoryReport() {
                     <option value="">-- Elige un producto --</option>
                     {stockBalances.map(s => (
                       <option key={s.product.id} value={s.product.id}>
-                        {s.product.name} ({s.product.unit}) - Cat: {s.product.category}
+                        {s.product.name} ({s.product.unit})
                       </option>
                     ))}
                   </select>

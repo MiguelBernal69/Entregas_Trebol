@@ -45,7 +45,7 @@ export default function LoginPage() {
 
         {/* Logo / título */}
         <div className="text-center mb-8">
-          <div className="text-4xl mb-2">🥔</div>
+          <div className="text-4xl mb-2">🍀</div>
           <h1 className="text-2xl font-bold text-gray-800">Sistema de Pedidos</h1>
           <p className="text-gray-500 text-sm mt-1">Ingresa tus credenciales</p>
         </div>
@@ -95,7 +95,7 @@ export default function LoginPage() {
         </form>
 
         <div className="text-center text-xs text-gray-400 mt-4 font-medium">
-          Distribuidora Lunova Admin {APP_VERSION}
+          Distribuidora Trébol {APP_VERSION}
         </div>
       </div>
     </div>

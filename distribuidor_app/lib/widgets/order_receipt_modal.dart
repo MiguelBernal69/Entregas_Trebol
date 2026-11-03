@@ -37,7 +37,7 @@ class OrderReceiptModal extends StatefulWidget {
   }
 
   /// Genera el texto monoespaciado optimizado para impresoras térmicas
-  /// [is80mm] = true para Epson TM-T20III / 80mm (44 columnas)
+  /// [is80mm] = true para impresora predeterminada de 80mm (44 columnas)
   /// [is80mm] = false para Impresoras Bluetooth portátiles / 58mm (32 columnas)
   static String buildReceiptText({
     required Order order,
@@ -58,7 +58,6 @@ class OrderReceiptModal extends StatefulWidget {
       return ' ' * leftPadding + text;
     }
 
-    final sepDouble = '=' * lineWidth;
     final sepSingle = '-' * lineWidth;
 
     // Cantidades reales o entregadas
@@ -76,22 +75,12 @@ class OrderReceiptModal extends StatefulWidget {
 
     // Cálculos de totales
     double subtotal = 0.0;
-    int totalRegularQty = 0;
-    int totalBoniQty = 0;
 
     for (final item in regularItems) {
       final qty = isHistory || customDeliveredQuantities != null
           ? getDeliveredQty(item)
           : item.quantity;
       subtotal += qty * item.unitPrice;
-      totalRegularQty += qty;
-    }
-
-    for (final item in boniItems) {
-      final qty = isHistory || customDeliveredQuantities != null
-          ? getDeliveredQty(item)
-          : item.quantity;
-      totalBoniQty += qty;
     }
 
     final discount = order.discount;
@@ -107,129 +96,80 @@ class OrderReceiptModal extends StatefulWidget {
       dateStr = order.createdAt;
     }
 
-    buffer.writeln(center("DISTRIBUIDORA LUNOVA"));
-    buffer.writeln(center("contacto: 74347987"));
+    buffer.writeln(center("DISTRIBUIDORA TRÉBOL"));
+    buffer.writeln(center("Contacto: 73750520"));
     buffer.writeln(sepSingle);
-    buffer.writeln("pedido #${order.id}");
-    buffer.writeln("vendedor: ${order.preventistaName ?? distributorName ?? 'Distribución'}");
-    buffer.writeln("fecha entrega: $dateStr");
-    buffer.writeln("cliente: ${order.client.name}");
+    buffer.writeln("Pedido #${order.id}");
+    buffer.writeln("Vendedor: ${order.preventistaName ?? distributorName ?? 'Distribución'}");
+    buffer.writeln("Fecha entrega: $dateStr");
+    buffer.writeln("Cliente: ${order.client.name}");
     if (order.client.phone.trim().isNotEmpty) {
-      buffer.writeln("contacto: ${order.client.phone}");
+      buffer.writeln("Contacto: ${order.client.phone}");
     }
     if (order.client.address.trim().isNotEmpty) {
-      buffer.writeln("direccion: ${order.client.address}");
+      buffer.writeln("Dirección: ${order.client.address}");
     }
     buffer.writeln(sepSingle);
 
-    if (is80mm) {
-      // Formato para 80mm Epson TM-T20III
-      buffer.writeln("Descripcion                    CANT   P.U    total");
-      buffer.writeln(sepSingle);
+    final nameWidth = is80mm ? 21 : 12;
+    final qtyWidth = is80mm ? 5 : 4;
+    final priceWidth = is80mm ? 8 : 7;
+    final totalWidth = is80mm ? 10 : 9;
 
-      for (final item in regularItems) {
-        final qty = isHistory || customDeliveredQuantities != null
-            ? getDeliveredQty(item)
-            : item.quantity;
-        final itemTotal = qty * item.unitPrice;
-        final qtyStr = padLeft("x$qty", 4);
-        final puStr = padLeft(item.unitPrice.toStringAsFixed(2), 6);
-        final totStr = padLeft(itemTotal.toStringAsFixed(2), 8);
-        const maxLen = 24;
+    String tableRow(String name, String qty, String price, String amount) =>
+        padRight(name, nameWidth) +
+        padLeft(qty, qtyWidth) +
+        padLeft(price, priceWidth) +
+        padLeft(amount, totalWidth);
 
-        if (item.productName.length <= maxLen) {
-          final nameStr = padRight(item.productName, maxLen);
-          buffer.writeln("$nameStr $qtyStr $puStr $totStr");
-        } else {
-          final first = item.productName.substring(0, maxLen);
-          buffer.writeln("$first $qtyStr $puStr $totStr");
-          var rem = item.productName.substring(maxLen).trim();
-          while (rem.isNotEmpty) {
-            final take = rem.length > maxLen ? maxLen : rem.length;
-            final chunk = rem.substring(0, take);
-            buffer.writeln(chunk);
-            rem = rem.substring(take).trim();
-          }
-        }
+    buffer.writeln(tableRow('Descripcion', 'CANT', 'P.U.', 'total'));
+    buffer.writeln(sepSingle);
+
+    for (final item in regularItems) {
+      final qty = isHistory || customDeliveredQuantities != null
+          ? getDeliveredQty(item)
+          : item.quantity;
+      final itemTotal = qty * item.unitPrice;
+      buffer.writeln(tableRow(
+        item.productName,
+        'x$qty',
+        item.unitPrice.toStringAsFixed(2),
+        itemTotal.toStringAsFixed(2),
+      ));
+      for (var offset = nameWidth; offset < item.productName.length; offset += nameWidth) {
+        final end = (offset + nameWidth < item.productName.length)
+            ? offset + nameWidth
+            : item.productName.length;
+        buffer.writeln(item.productName.substring(offset, end));
       }
-
-      if (boniItems.isNotEmpty) {
-        buffer.writeln(sepSingle);
-        buffer.writeln("*** BONIFICACIONES (GRATIS) ***");
-        for (final item in boniItems) {
-          final qty = isHistory || customDeliveredQuantities != null
-              ? getDeliveredQty(item)
-              : item.quantity;
-          buffer.writeln("[BONIF] ${item.productName} x$qty (GRATIS)");
-        }
-      }
-
-      buffer.writeln(sepSingle);
-      if (discount > 0) {
-        buffer.writeln("subtotal:                 ${padLeft('Bs. ${subtotal.toStringAsFixed(2)}', 16)}");
-        buffer.writeln("descuento:                ${padLeft('-Bs. ${discount.toStringAsFixed(2)}', 16)}");
-        buffer.writeln(sepSingle);
-      }
-      buffer.writeln("total:                    ${padLeft('Bs. ${totalNeto.toStringAsFixed(2)}', 16)}");
-    } else {
-      // Formato para 58mm Bluetooth Portátil (32 columnas)
-      buffer.writeln("Descripcion         CANT  P.U  total");
-      buffer.writeln(sepSingle);
-
-      for (final item in regularItems) {
-        final qty = isHistory || customDeliveredQuantities != null
-            ? getDeliveredQty(item)
-            : item.quantity;
-        final itemTotal = qty * item.unitPrice;
-        final qtyStr = padLeft("x$qty", 4);
-        final puStr = padLeft(item.unitPrice.toStringAsFixed(2), 5);
-        final totStr = padLeft(itemTotal.toStringAsFixed(2), 6);
-        const maxLen = 15;
-
-        if (item.productName.length <= maxLen) {
-          final nameStr = padRight(item.productName, maxLen);
-          buffer.writeln("$nameStr $qtyStr $puStr $totStr");
-        } else {
-          final first = item.productName.substring(0, maxLen);
-          buffer.writeln("$first $qtyStr $puStr $totStr");
-          var rem = item.productName.substring(maxLen).trim();
-          while (rem.isNotEmpty) {
-            final take = rem.length > maxLen ? maxLen : rem.length;
-            final chunk = rem.substring(0, take);
-            buffer.writeln(chunk);
-            rem = rem.substring(take).trim();
-          }
-        }
-      }
-
-      if (boniItems.isNotEmpty) {
-        buffer.writeln(sepSingle);
-        buffer.writeln("*** BONIFICACIONES (GRATIS) ***");
-        for (final item in boniItems) {
-          final qty = isHistory || customDeliveredQuantities != null
-              ? getDeliveredQty(item)
-              : item.quantity;
-          buffer.writeln("[BONIF] ${item.productName} x$qty (GRATIS)");
-        }
-      }
-
-      buffer.writeln(sepSingle);
-      if (discount > 0) {
-        buffer.writeln("subtotal:           ${padLeft('Bs. ${subtotal.toStringAsFixed(2)}', 12)}");
-        buffer.writeln("descuento:          ${padLeft('-Bs. ${discount.toStringAsFixed(2)}', 12)}");
-        buffer.writeln(sepSingle);
-      }
-      buffer.writeln("total:              ${padLeft('Bs. ${totalNeto.toStringAsFixed(2)}', 12)}");
     }
+
+    if (boniItems.isNotEmpty) {
+      buffer.writeln(sepSingle);
+      buffer.writeln('BONIFICACIONES (GRATIS)');
+      for (final item in boniItems) {
+        final qty = isHistory || customDeliveredQuantities != null
+            ? getDeliveredQty(item)
+            : item.quantity;
+        buffer.writeln('${item.productName} x$qty GRATIS');
+      }
+    }
+
+    buffer.writeln(sepSingle);
+    if (discount > 0) {
+      buffer.writeln('Subtotal: Bs ${subtotal.toStringAsFixed(2)}');
+      buffer.writeln('Descuento: -Bs ${discount.toStringAsFixed(2)}');
+    }
+    buffer.writeln('TOTAL: Bs ${totalNeto.toStringAsFixed(2)}');
 
     if (order.notes != null && order.notes!.trim().isNotEmpty) {
       buffer.writeln(sepSingle);
-      buffer.writeln("obs: ${order.notes!.trim()}");
+      buffer.writeln("Obs: ${order.notes!.trim()}");
     }
 
     buffer.writeln(sepSingle);
-    buffer.writeln(center("gracias por su compra"));
-    buffer.writeln(sepDouble);
+    buffer.writeln(center("Gracias por su compra"));
+    buffer.writeln(sepSingle);
 
     return buffer.toString();
   }
@@ -239,7 +179,7 @@ class OrderReceiptModal extends StatefulWidget {
 }
 
 class _OrderReceiptModalState extends State<OrderReceiptModal> {
-  bool _is80mm = true; // Por defecto Epson TM-T20III (80mm)
+  bool _is80mm = true; // Por defecto impresora predeterminada (80mm)
 
   /// Genera un documento PDF nítido y de alto contraste listo para impresión directa
   Future<Uint8List> _generateThermalPdf(PdfPageFormat format) async {
@@ -258,22 +198,12 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
     }
 
     double subtotal = 0.0;
-    int totalRegularQty = 0;
-    int totalBoniQty = 0;
 
     for (final item in regularItems) {
       final qty = isHistory || widget.customDeliveredQuantities != null
           ? getDeliveredQty(item)
           : item.quantity;
       subtotal += qty * item.unitPrice;
-      totalRegularQty += qty;
-    }
-
-    for (final item in boniItems) {
-      final qty = isHistory || widget.customDeliveredQuantities != null
-          ? getDeliveredQty(item)
-          : item.quantity;
-      totalBoniQty += qty;
     }
 
     final discount = widget.order.discount;
@@ -290,6 +220,10 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
 
     final regularFont = await PdfGoogleFonts.robotoRegular();
     final boldFont = await PdfGoogleFonts.robotoBold();
+    final qtyColumn = _is80mm ? 32.0 : 24.0;
+    final priceColumn = _is80mm ? 38.0 : 31.0;
+    final totalColumn = _is80mm ? 45.0 : 36.0;
+    final itemFontSize = _is80mm ? 9.0 : 7.5;
 
     doc.addPage(
       pw.Page(
@@ -297,14 +231,14 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
         theme: pw.ThemeData.withFont(base: regularFont, bold: boldFont),
         build: (pw.Context context) {
           return pw.Container(
-            padding: const pw.EdgeInsets.all(6),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 1),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 // Cabecera
                 pw.Center(
                   child: pw.Text(
-                    'DISTRIBUIDORA LUNOVA',
+                    'DISTRIBUIDORA TRÉBOL',
                     style: pw.TextStyle(
                       font: boldFont,
                       fontSize: _is80mm ? 14 : 12,
@@ -314,7 +248,7 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                 ),
                 pw.Center(
                   child: pw.Text(
-                    'contacto: 74347987',
+                    'Contacto: 73750520',
                     style: pw.TextStyle(
                       font: boldFont,
                       fontSize: _is80mm ? 10 : 9,
@@ -324,23 +258,23 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                 pw.Divider(thickness: 1),
 
                 // Datos de orden
-                pw.Text('pedido #${widget.order.id}', style: pw.TextStyle(font: boldFont, fontSize: 9)),
-                pw.Text('vendedor: ${widget.order.preventistaName ?? widget.distributorName ?? 'Distribución'}', style: const pw.TextStyle(fontSize: 8)),
-                pw.Text('fecha entrega: $dateStr', style: const pw.TextStyle(fontSize: 8)),
-                pw.Text('cliente: ${widget.order.client.name}', style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                pw.Text('Pedido #${widget.order.id}', style: pw.TextStyle(font: boldFont, fontSize: 9)),
+                pw.Text('Vendedor: ${widget.order.preventistaName ?? widget.distributorName ?? 'Distribución'}', style: const pw.TextStyle(fontSize: 8)),
+                pw.Text('Fecha entrega: $dateStr', style: const pw.TextStyle(fontSize: 8)),
+                pw.Text('Cliente: ${widget.order.client.name}', style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
                 if (widget.order.client.phone.isNotEmpty)
-                  pw.Text('contacto: ${widget.order.client.phone}', style: const pw.TextStyle(fontSize: 8)),
+                  pw.Text('Contacto: ${widget.order.client.phone}', style: const pw.TextStyle(fontSize: 8)),
                 if (widget.order.client.address.isNotEmpty)
-                  pw.Text('direccion: ${widget.order.client.address}', style: const pw.TextStyle(fontSize: 8)),
+                  pw.Text('Dirección: ${widget.order.client.address}', style: const pw.TextStyle(fontSize: 8)),
                 pw.Divider(thickness: 1),
 
                 // Tabla de Productos
                 pw.Row(
                   children: [
-                    pw.Expanded(child: pw.Text('Descripcion', style: pw.TextStyle(font: boldFont, fontSize: 8))),
-                    pw.SizedBox(width: 30, child: pw.Text('CANT', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: boldFont, fontSize: 8))),
-                    pw.SizedBox(width: 35, child: pw.Text('P.U', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: 8))),
-                    pw.SizedBox(width: 45, child: pw.Text('total', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: 8))),
+                    pw.Expanded(child: pw.Text('Descripcion', style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
+                    pw.SizedBox(width: qtyColumn, child: pw.Text('CANT', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
+                    pw.SizedBox(width: priceColumn, child: pw.Text('P.U.', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
+                    pw.SizedBox(width: totalColumn, child: pw.Text('total', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
                   ],
                 ),
                 pw.Divider(thickness: 0.5),
@@ -354,10 +288,10 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                     padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
                     child: pw.Row(
                       children: [
-                        pw.Expanded(child: pw.Text(item.productName, style: const pw.TextStyle(fontSize: 8))),
-                        pw.SizedBox(width: 30, child: pw.Text('x$qty', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: boldFont, fontSize: 8))),
-                        pw.SizedBox(width: 35, child: pw.Text(item.unitPrice.toStringAsFixed(2), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 8))),
-                        pw.SizedBox(width: 45, child: pw.Text(itemTotal.toStringAsFixed(2), textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: 8))),
+                        pw.Expanded(child: pw.Text(item.productName, style: pw.TextStyle(fontSize: itemFontSize))),
+                        pw.SizedBox(width: qtyColumn, child: pw.Text('x$qty', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
+                        pw.SizedBox(width: priceColumn, child: pw.Text(item.unitPrice.toStringAsFixed(2), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: itemFontSize))),
+                        pw.SizedBox(width: totalColumn, child: pw.Text(itemTotal.toStringAsFixed(2), textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
                       ],
                     ),
                   );
@@ -376,8 +310,8 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                       child: pw.Row(
                         children: [
                           pw.Expanded(child: pw.Text('[BONIF] ${item.productName}', style: const pw.TextStyle(fontSize: 7.5))),
-                          pw.SizedBox(width: 30, child: pw.Text('x$qty', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: boldFont, fontSize: 7.5))),
-                          pw.SizedBox(width: 45, child: pw.Text('GRATIS', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: 7.5))),
+                          pw.SizedBox(width: qtyColumn, child: pw.Text('x$qty', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: boldFont, fontSize: 7.5))),
+                          pw.SizedBox(width: totalColumn, child: pw.Text('GRATIS', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: 7.5))),
                         ],
                       ),
                     );
@@ -391,15 +325,15 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text('subtotal:', style: const pw.TextStyle(fontSize: 8)),
-                      pw.Text('Bs. ${subtotal.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 8)),
+                      pw.Text('Subtotal:', style: const pw.TextStyle(fontSize: 8)),
+                      pw.Text('Bs ${subtotal.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 8)),
                     ],
                   ),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text('descuento:', style: pw.TextStyle(font: boldFont, fontSize: 8)),
-                      pw.Text('-Bs. ${discount.toStringAsFixed(2)}', style: pw.TextStyle(font: boldFont, fontSize: 8)),
+                      pw.Text('Descuento:', style: pw.TextStyle(font: boldFont, fontSize: 8)),
+                      pw.Text('-Bs ${discount.toStringAsFixed(2)}', style: pw.TextStyle(font: boldFont, fontSize: 8)),
                     ],
                   ),
                   pw.Divider(thickness: 0.5),
@@ -407,23 +341,24 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('total:', style: pw.TextStyle(font: boldFont, fontSize: _is80mm ? 12 : 10)),
-                    pw.Text('Bs. ${totalNeto.toStringAsFixed(2)}', style: pw.TextStyle(font: boldFont, fontSize: _is80mm ? 12 : 10)),
+                    pw.Text('TOTAL:', style: pw.TextStyle(font: boldFont, fontSize: _is80mm ? 12 : 10)),
+                    pw.Text('Bs ${totalNeto.toStringAsFixed(2)}', style: pw.TextStyle(font: boldFont, fontSize: _is80mm ? 12 : 10)),
                   ],
                 ),
 
                 if (widget.order.notes != null && widget.order.notes!.trim().isNotEmpty) ...[
                   pw.Divider(thickness: 0.5),
-                  pw.Text('obs: ${widget.order.notes!.trim()}', style: const pw.TextStyle(fontSize: 7.5)),
+                  pw.Text('Obs: ${widget.order.notes!.trim()}', style: const pw.TextStyle(fontSize: 7.5)),
                 ],
 
                 pw.Divider(thickness: 1),
                 pw.Center(
                   child: pw.Text(
-                    'gracias por su compra',
+                    'Gracias por su compra',
                     style: pw.TextStyle(font: boldFont, fontSize: 8.5),
                   ),
                 ),
+                pw.Divider(thickness: 0.5),
               ],
             ),
           );
@@ -520,7 +455,7 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                         ),
                       ),
                       Text(
-                        '${widget.order.client.name} • ${_is80mm ? "Epson (80mm)" : "Bluetooth (58mm)"}',
+                        '${widget.order.client.name} • ${_is80mm ? "Impresora predeterminada (80mm)" : "Bluetooth (58mm)"}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -537,7 +472,7 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
             ),
             const SizedBox(height: 12),
 
-            // Selector de Ancho: Epson 80mm vs Bluetooth 58mm
+            // Selector de ancho de papel
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -574,7 +509,7 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Epson (80mm)',
+                        'Impresora predeterminada (80mm)',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -668,7 +603,7 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  '📋 Boleta (${_is80mm ? "80mm Epson" : "58mm Bluetooth"}) copiada para RawBT.',
+                                  '📋 Boleta (${_is80mm ? "80mm" : "58mm Bluetooth"}) copiada para RawBT.',
                                 ),
                               ),
                             ],

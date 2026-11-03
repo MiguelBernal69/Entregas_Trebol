@@ -6,7 +6,6 @@ import { getDailyReport } from '../../api/orders'
 interface ProductSummary {
   productId: number
   name: string
-  category: string
   unit: string
   unitPrice: number
   regularQuantity?: number
@@ -19,7 +18,6 @@ interface ProductSummary {
 interface BonificationSummary {
   productId: number
   name: string
-  category: string
   unit: string
   bonificationQuantity: number
 }
@@ -218,7 +216,7 @@ export default function PreventistaReport() {
 
         {/* Encabezado exclusivo para impresión */}
         <div className="hidden print:block border-b pb-4 mb-4 text-center">
-          <h1 className="text-xl font-bold uppercase tracking-wider">🥔 Reporte de Ventas de Preventa</h1>
+          <h1 className="text-xl font-bold uppercase tracking-wider">🍀 Reporte de Ventas de Preventa</h1>
           <p className="text-xs text-gray-600 mt-1">Periodo: {report?.startDate} al {report?.endDate}</p>
           <p className="text-[10px] text-gray-400">Fecha de emisión: {new Date().toLocaleString()}</p>
         </div>
@@ -310,7 +308,7 @@ export default function PreventistaReport() {
               <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-bold text-gray-800">
-                    🥔 Desglose de Productos Vendidos en el Periodo
+                    🍀 Desglose de Productos Vendidos en el Periodo
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
                     Volumen y recaudación por cada variedad de producto
@@ -331,7 +329,6 @@ export default function PreventistaReport() {
                     <thead className="bg-gray-50 border-b text-gray-600 font-semibold text-xs">
                       <tr>
                         <th className="text-left px-5 py-3">Producto</th>
-                        <th className="text-left px-5 py-3">Categoría</th>
                         <th className="text-left px-5 py-3">Unidad</th>
                         <th className="text-center px-5 py-3">Cantidad Venta</th>
                         <th className="text-right px-5 py-3">Precio Base</th>
@@ -350,7 +347,6 @@ export default function PreventistaReport() {
                         return (
                           <tr key={prod.productId} className="hover:bg-gray-50/80 transition-colors">
                             <td className="px-5 py-3.5 font-bold text-gray-800">{prod.name}</td>
-                            <td className="px-5 py-3.5 text-gray-500 text-xs">{prod.category}</td>
                             <td className="px-5 py-3.5 text-gray-500 text-xs">{prod.unit}</td>
                             <td className="px-5 py-3.5 text-center">
                               <div className="flex flex-col items-center gap-1">
@@ -417,7 +413,7 @@ export default function PreventistaReport() {
                     <div key={b.productId} className="flex items-center justify-between p-3.5 bg-emerald-50/40 rounded-xl border border-emerald-100">
                       <div>
                         <p className="font-bold text-gray-800 text-sm">{b.name}</p>
-                        <p className="text-xs text-gray-500">{b.category} • {b.unit}</p>
+                        <p className="text-xs text-gray-500">{b.unit}</p>
                       </div>
                       <span className="px-2.5 py-1 bg-emerald-600 text-white font-bold text-xs rounded-lg shadow-xs">
                         🎁 {b.bonificationQuantity} unid

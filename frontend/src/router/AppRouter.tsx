@@ -16,7 +16,7 @@ import AdminHistory from '../pages/admin/History'
 import AdminClients from '../pages/admin/Clients'
 import AssignRegions from '../pages/admin/AssignRegions'
 import DistributionSessions from '../pages/admin/DistributionSessions'
-import AdminInventory from '../pages/admin/InventoryReport'
+// import AdminInventory from '../pages/admin/InventoryReport' // reservado para futura activación
 
 // Preventista
 import PreventistaClients from '../pages/preventista/Clients'
@@ -45,7 +45,7 @@ export const AppRouter = () => {
         <Route path="/admin/dashboard" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/products" element={<ProtectedRoute roles={['admin']}><AdminProducts /></ProtectedRoute>} />
-        <Route path="/admin/inventory" element={<ProtectedRoute roles={['admin']}><AdminInventory /></ProtectedRoute>} />
+        {/* Inventario reservado para una futura activación; se mantiene el código. */}
         <Route path="/admin/orders" element={<ProtectedRoute roles={['admin']}><AdminOrders /></ProtectedRoute>} />
         <Route path="/admin/map" element={<ProtectedRoute roles={['admin']}><AdminMap /></ProtectedRoute>} />
         <Route path="/admin/regions" element={<ProtectedRoute roles={['admin', 'preventista']}><AdminRegions /></ProtectedRoute>} />

@@ -1,9 +1,8 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
+const { printReceiptGdi } = require('./gdi-printer')
 
-const SERVER_URL = 'http://178.105.45.6'
-
-// const SERVER_URL = 'http://localhost:5173'
+const SERVER_URL = process.env.TREBOL_SERVER_URL || 'http://localhost:5173'
 
 let mainWindow
 
@@ -13,7 +12,7 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: 'Distribuidora Lunova v1.2.0 — Sistema de Entregas',
+    title: 'Distribuidora Trébol v1.1.0 — Sistema de Entregas',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -89,6 +88,7 @@ function buildReceiptHtml(order) {
 <html>
   <head>
     <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
     <title>Boleta Pedido #${order.id}</title>
     <style>
       @page {
@@ -99,14 +99,14 @@ function buildReceiptHtml(order) {
       html, body { margin: 0; padding: 0; width: 100%; }
       body {
         font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 700;
         line-height: 1.25;
         margin: 0 auto;
-        padding: 1mm 5mm 0 5mm;
+        padding: 1mm 0 0 0;
         color: #000;
-        width: 80mm;
-        max-width: 80mm;
+        width: 72mm;
+        max-width: 72mm;
         box-sizing: border-box;
       }
       .text-center { text-align: center; }
@@ -115,15 +115,15 @@ function buildReceiptHtml(order) {
       .flex { display: flex; justify-content: space-between; align-items: baseline; }
       .bold { font-weight: 900; }
       .items-table { width: 100%; border-collapse: collapse; margin: 4px 0; table-layout: fixed; }
-      .items-table th, .items-table td { padding: 1.5px 0; vertical-align: top; font-size: 12px; font-weight: 700; }
+      .items-table th, .items-table td { padding: 1.5px 0; vertical-align: top; font-size: 13px; font-weight: 700; }
       .items-table th { border-bottom: 1px solid #000; font-weight: 900; }
-      .feed-space { height: 8mm; min-height: 8mm; line-height: 8mm; font-size: 1px; }
+      .feed-space { height: 2mm; min-height: 2mm; line-height: 2mm; font-size: 1px; }
     </style>
   </head>
   <body>
     <div class="text-center">
-      <div style="font-size: 16px; font-weight: 900;">DISTRIBUIDORA LUNOVA</div>
-      <div style="font-size: 12px;">contacto: 74347987</div>
+      <div style="font-size: 18px; font-weight: 900;">DISTRIBUIDORA TRÉBOL</div>
+      <div style="font-size: 12px;">contacto: 73750520</div>
       <div class="border-b"></div>
     </div>
     <div style="font-size: 12px;">
@@ -160,7 +160,7 @@ function buildReceiptHtml(order) {
       <div style="font-size: 11px;"><span class="bold">obs:</span> ${order.notes}</div>
     ` : ''}
     <div class="border-b"></div>
-    <div class="text-center" style="font-size: 12px; margin-top: 6px;">gracias por su compra</div>
+    <div class="text-center" style="font-size: 13px; margin-top: 6px;">gracias por su compra</div>
     <div style="text-align: center; font-size: 9px; margin-top: 4px; letter-spacing: 3px; color: #333;">- - - - - - - - - - - - - - -</div>
     <div class="feed-space">&nbsp;</div>
   </body>
@@ -185,22 +185,36 @@ function printOrderSilently(order, deviceName) {
 
     win.webContents.once('did-finish-load', () => {
       const options = {
-        silent: true,         // sin diálogo de impresión
+        silent: false,        // algunos controladores imprimen en blanco con modo silencioso
         printBackground: true,
         color: false,
-        // Tamaño de página explícito: ancho 80mm, alto 2000mm (2 metros de canvas).
-        // Las impresoras térmicas con auto-corte NO avanzan el papel en blanco —
-        // cortan justo después del contenido + feed-space, sin importar el alto máximo.
-        // El valor grande garantiza que jamás se corten boletas con muchos productos.
-        pageSize: { width: 80000, height: 2000000 }, // en micrómetros (1mm = 1000 µm)
+        // La altura se calcula con el contenido para evitar papel vacío al final.
+        pageSize: { width: 80000, height: 100000 },
       }
       if (deviceName) options.deviceName = deviceName
 
-      win.webContents.print(options, (success, errorType) => {
-        console.log(`[print] pedido #${order.id} → ok=${success} error=${errorType}`)
-        win.close()
-        resolve({ ok: success, error: success ? null : errorType })
-      })
+      setTimeout(() => {
+        win.webContents.executeJavaScript(`(() => {
+          const body = document.body?.scrollHeight || 0
+          const html = document.documentElement?.scrollHeight || 0
+          return Math.max(body, html)
+        })()`).then(cssHeight => {
+          const height = Math.max(100000, Math.ceil(cssHeight * 264.583) + 2000)
+        options.pageSize.height = height
+        win.webContents.print(options, (success, errorType) => {
+          console.log(`[print] pedido #${order.id} → ok=${success} error=${errorType}`)
+          win.close()
+          resolve({ ok: success, error: success ? null : errorType })
+        })
+        }).catch(error => {
+          console.error(`[print] no se pudo medir la boleta #${order.id}`, error)
+          options.pageSize.height = 300000
+          win.webContents.print(options, (success, errorType) => {
+            win.close()
+            resolve({ ok: success, error: success ? null : errorType })
+          })
+        })
+      }, 150)
     })
 
     win.webContents.once('did-fail-load', (event, code, desc) => {
@@ -211,27 +225,26 @@ function printOrderSilently(order, deviceName) {
   })
 }
 
-// ─── Handler principal de impresión ESC/POS ──────────────────────────────────
+// ─── Handler principal de impresión mediante el controlador de Windows ───────
 ipcMain.handle('print-escpos', async (event, orders) => {
   try {
-    // Obtener impresoras disponibles para encontrar la predeterminada
+    if (process.platform !== 'win32') throw new Error('La impresión USB directa está disponible en Windows')
+    if (!Array.isArray(orders) || orders.length === 0) throw new Error('No hay boletas para imprimir')
     const printers = await mainWindow.webContents.getPrintersAsync()
-    const defaultPrinter = printers.find(p => p.isDefault)
-    const deviceName = defaultPrinter?.displayName || defaultPrinter?.name || null
+    const configuredName = process.env.TREBOL_PRINTER_NAME || 'POS80 Printer'
+    const printer = printers.find(p => p.name === configuredName || p.displayName === configuredName)
+    if (!printer) throw new Error(`No se encontró la impresora USB "${configuredName}". Disponibles: ${printers.map(p => p.name).join(', ')}`)
 
-    let failed = 0
+    let count = 0
     for (const order of orders) {
-      const result = await printOrderSilently(order, deviceName)
-      if (!result.ok) failed++
-      // Pequeña pausa entre boletas para que la impresora procese y corte
-      await new Promise(r => setTimeout(r, 800))
+      await printReceiptGdi(printer.name, order)
+      count++
     }
-
     return {
-      ok: failed === 0,
-      count: orders.length - failed,
-      printer: deviceName || 'impresora predeterminada',
-      error: failed > 0 ? `${failed} boleta(s) fallaron` : null,
+      ok: true,
+      count,
+      printer: printer.displayName || printer.name,
+      error: null,
     }
   } catch (e) {
     return { ok: false, error: e.message }

@@ -31,8 +31,8 @@ app.use('/api/sessions', sessionsRouter)
 
 app.get('/api/version', (req, res) => {
   res.json({
-    name: 'Distribuidora Lunova API',
-    version: '1.2.0',
+    name: 'Distribuidora Trébol API',
+    version: '1.1.0',
     status: 'online',
   })
 })

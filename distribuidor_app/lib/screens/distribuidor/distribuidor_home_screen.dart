@@ -63,7 +63,7 @@ class _DistribuidorHomeScreenState extends State<DistribuidorHomeScreen> {
     if (!_hasSession) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Entregas Papas'),
+          title: const Text('Distribuidora Trébol'),
           actions: [
             IconButton(
               icon: const Icon(Icons.logout),

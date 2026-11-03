@@ -33,16 +33,12 @@ export const createProduct = async (data: {
   description?: string
   price: number
   unit: string
-  category?: string
 }) => {
   const exists = await prisma.product.findFirst({ where: { name: data.name } })
   if (exists) throw new Error('Ya existe un producto con ese nombre')
 
   return prisma.product.create({
-    data: {
-      ...data,
-      category: data.category?.trim() || 'Categoría A'
-    }
+    data
   })
 }
 
@@ -51,17 +47,13 @@ export const updateProduct = async (id: number, data: {
   description?: string
   price?: number
   unit?: string
-  category?: string
 }) => {
   const product = await prisma.product.findUnique({ where: { id } })
   if (!product) throw new Error('Producto no encontrado')
 
   return prisma.product.update({
     where: { id },
-    data: {
-      ...data,
-      ...(data.category && { category: data.category.trim() })
-    }
+    data
   })
 }
 
@@ -79,15 +71,10 @@ export const toggleProduct = async (id: number) => {
 export const getInventoryStats = async (filters: {
   startDate?: string
   endDate?: string
-  category?: string
   preventistaId?: number
   distributorId?: number
 }) => {
   const productWhere: any = {}
-  if (filters.category && filters.category !== 'all') {
-    productWhere.category = filters.category
-  }
-
   const products = await prisma.product.findMany({
     where: productWhere,
     orderBy: { name: 'asc' }
@@ -117,7 +104,6 @@ export const getInventoryStats = async (filters: {
   const items = await prisma.orderItem.findMany({
     where: {
       order: orderWhere,
-      ...(productWhere.category ? { product: productWhere } : {})
     },
     include: {
       order: {
@@ -137,7 +123,6 @@ export const getInventoryStats = async (filters: {
       name: string
       unit: string
       price: number
-      category: string
       isActive: boolean
     }
     pedidaRegular: number
@@ -159,7 +144,6 @@ export const getInventoryStats = async (filters: {
         name: p.name,
         unit: p.unit,
         price: p.price,
-        category: p.category,
         isActive: p.isActive
       },
       pedidaRegular: 0,

@@ -16,7 +16,6 @@ export interface Product {
     description?: string
     price: number
     unit: string
-    category: string
     isActive: boolean
 }
 

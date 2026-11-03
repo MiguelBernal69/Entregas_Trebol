@@ -44,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Text('🥔', style: TextStyle(fontSize: 64)),
+              const Text('🍀', style: TextStyle(fontSize: 64)),
               const SizedBox(height: 8),
               const Text(
                 'Distribuidor App',
@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Distribuidora Lunova ${AppVersion.version}',
+                      'Distribuidora Trébol ${AppVersion.version}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12,

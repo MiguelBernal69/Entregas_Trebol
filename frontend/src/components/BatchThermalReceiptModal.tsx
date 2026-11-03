@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type { Order } from '../types'
+import { escapeReceipt, receiptBody, receiptCss, receiptDocument, receiptText } from './receiptTemplate'
 
 // Detección de Electron: si window.electronAPI existe estamos dentro del .exe
 declare global {
@@ -94,134 +95,7 @@ export default function BatchThermalReceiptModal({
     })
   })
 
-  // Genera el HTML completo para imprimir una sola boleta de forma aislada
-  const getSingleOrderHtml = (order: Order, widthMode: '80mm' | '58mm' | 'a4') => {
-    const regularItems = order.items.filter(i => !i.isBonification)
-    const bonifItems = order.items.filter(i => i.isBonification)
-    const discountVal = Number(order.discount || 0)
-    const subtotal = regularItems.reduce(
-      (acc, i) => acc + i.unitPrice * (i.deliveredQuantity ?? i.quantity),
-      0
-    )
-    const finalTotal = Math.max(0, subtotal - discountVal)
-    const dateToUse = order.deliveredAt ? new Date(order.deliveredAt) : new Date(order.createdAt)
-    const dateFormatted = `${dateToUse.toLocaleDateString()} ${dateToUse.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-    const widthStr = widthMode === '80mm' ? '80mm' : widthMode === '58mm' ? '58mm' : '100%'
-
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Boleta Pedido #${order.id}</title>
-          <style>
-            @page {
-              size: ${widthMode === '80mm' ? '80mm auto' : widthMode === '58mm' ? '58mm auto' : 'A4'};
-              margin: 0;
-            }
-            * { box-sizing: border-box; }
-            html, body { margin: 0; padding: 0; width: 100%; }
-            body {
-              font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
-              font-size: 13px;
-              font-weight: 700;
-              line-height: 1.25;
-              margin: 0 auto;
-              padding: 1mm 5mm 0 5mm;
-              color: #000;
-              width: ${widthStr};
-              max-width: ${widthStr};
-              box-sizing: border-box;
-            }
-            .text-center { text-align: center; }
-            .text-right { text-align: right; }
-            .border-b { border-bottom: 1px solid #000; margin: 5px 0; }
-            .border-b-dashed { border-bottom: 1px dashed #000; margin: 5px 0; }
-            .flex { display: flex; justify-content: space-between; align-items: baseline; }
-            .bold { font-weight: 900; }
-            .items-table { width: 100%; border-collapse: collapse; margin: 4px 0; table-layout: fixed; }
-            .items-table th, .items-table td { padding: 1.5px 0; vertical-align: top; font-size: 12px; font-weight: 700; }
-            .items-table th { border-bottom: 1px solid #000; font-weight: 900; }
-            /* Avance de papel para que la cuchilla de la impresora corte limpio a ~1.2cm del texto */
-            .feed-space { height: 8mm; min-height: 8mm; line-height: 8mm; font-size: 1px; }
-          </style>
-        </head>
-        <body>
-          <div class="text-center">
-            <div style="font-size: 16px; font-weight: 900;">DISTRIBUIDORA LUNOVA</div>
-            <div style="font-size: 12px;">contacto: 74347987</div>
-            <div class="border-b"></div>
-          </div>
-          <div style="font-size: 12px;">
-            <div class="bold">pedido #${order.id}</div>
-            <div><span class="bold">vendedor:</span> ${order.preventista?.name || order.distributor?.name || 'Distribución'}</div>
-            <div><span class="bold">fecha entrega:</span> ${dateFormatted}</div>
-            <div><span class="bold">cliente:</span> ${order.client.name}</div>
-            ${order.client.phone ? `<div><span class="bold">contacto:</span> ${order.client.phone}</div>` : ''}
-            ${order.client.address ? `<div><span class="bold">direccion:</span> ${order.client.address}</div>` : ''}
-          </div>
-          <div class="border-b"></div>
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th align="left" style="width: auto;">Descripcion</th>
-                <th align="center" style="width: 32px;">CANT</th>
-                <th align="right" style="width: 44px;">P.U</th>
-                <th align="right" style="width: 48px; padding-right: 2px;">total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${regularItems.map(it => {
-                const qty = it.deliveredQuantity ?? it.quantity
-                return `
-                  <tr>
-                    <td style="word-break: break-word;">${it.product.name}</td>
-                    <td align="center" class="bold" style="width: 32px;">x${qty}</td>
-                    <td align="right" style="width: 44px;">${it.unitPrice.toFixed(2)}</td>
-                    <td align="right" class="bold" style="width: 48px; padding-right: 2px;">${(it.unitPrice * qty).toFixed(2)}</td>
-                  </tr>
-                `
-              }).join('')}
-            </tbody>
-          </table>
-          ${bonifItems.length > 0 ? `
-            <div class="border-b-dashed"></div>
-            <div style="font-size: 11px; font-weight: 900;">🎁 BONIFICACIONES (GRATIS)</div>
-            ${bonifItems.map(it => `
-              <div class="flex" style="font-size: 12px; padding-right: 2px;">
-                <span>[BONIF] ${it.product.name}</span>
-                <span class="bold">x${it.quantity} GRATIS</span>
-              </div>
-            `).join('')}
-          ` : ''}
-          <div class="border-b"></div>
-          ${discountVal > 0 ? `
-            <div class="flex" style="font-size: 12px; padding-right: 2px;">
-              <span>subtotal:</span>
-              <span>Bs. ${subtotal.toFixed(2)}</span>
-            </div>
-            <div class="flex bold" style="font-size: 12px; padding-right: 2px;">
-              <span>descuento:</span>
-              <span>-Bs. ${discountVal.toFixed(2)}</span>
-            </div>
-            <div class="border-b-dashed"></div>
-          ` : ''}
-          <div class="flex bold" style="font-size: 15px; margin-top: 3px; padding-right: 2px;">
-            <span>total:</span>
-            <span>Bs. ${finalTotal.toFixed(2)}</span>
-          </div>
-          ${order.notes ? `
-            <div class="border-b-dashed"></div>
-            <div style="font-size: 11px;"><span class="bold">obs:</span> ${order.notes}</div>
-          ` : ''}
-          <div class="border-b"></div>
-          <div class="text-center" style="font-size: 12px; margin-top: 6px;">gracias por su compra</div>
-          <div style="text-align: center; font-size: 9px; margin-top: 4px; letter-spacing: 3px; color: #333;">- - - - - - - - - - - - - - -</div>
-          <div class="feed-space">&nbsp;</div>
-        </body>
-      </html>
-    `
-  }
+  const getSingleOrderHtml = (order: Order, widthMode: '80mm' | '58mm' | 'a4') => receiptDocument(order, widthMode)
 
   // Imprime una sola boleta a través de un iframe invisible (garantiza corte de papel al terminar cada trabajo)
   // IMPORTANTE: usamos iframe.srcdoc en lugar de doc.write() porque con doc.write()
@@ -302,119 +176,11 @@ export default function BatchThermalReceiptModal({
     setIsAutoPrinting(false)
   }
 
-  // Generador de texto plano para todas las boletas
   const generateAllReceiptsText = (width: '80mm' | '58mm' | 'a4'): string => {
-    const colWidth = width === '58mm' ? 32 : 44
-    const divider = '-'.repeat(colWidth)
-    const dblDivider = '='.repeat(colWidth)
-
-    const center = (text: string) => {
-      if (text.length >= colWidth) return text.substring(0, colWidth)
-      const pad = Math.floor((colWidth - text.length) / 2)
-      return ' '.repeat(pad) + text
-    }
-
-    const row = (left: string, right: string) => {
-      const space = colWidth - left.length - right.length
-      if (space <= 0) return `${left} ${right}`
-      return left + ' '.repeat(space) + right
-    }
-
-    const lines: string[] = []
-
-    if (includeSummary) {
-      lines.push(dblDivider)
-      lines.push(center('HOJA DE RUTA / CARGA TOTAL'))
-      lines.push(center('DISTRIBUIDORA LUNOVA'))
-      lines.push(center('contacto: 74347987'))
-      lines.push(dblDivider)
-      lines.push(row('FECHA:', new Date().toLocaleDateString()))
-      lines.push(row('HORA:', new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })))
-      lines.push(row('TOTAL PEDIDOS:', `${orders.length}`))
-      lines.push(row('TOTAL BULTOS/UNDS:', `${totalBultosGeneral}`))
-      lines.push(row('TOTAL A COBRAR:', `Bs. ${totalCobrarGeneral.toFixed(2)}`))
-      lines.push(divider)
-      lines.push('RESUMEN DE PRODUCTOS:')
-      lines.push(divider)
-      Object.entries(productSummary).forEach(([name, data]) => {
-        lines.push(`${data.regular}x ${name}`)
-        if (data.bonif > 0) {
-          lines.push(`  + ${data.bonif}x [BONIF GRATIS]`)
-        }
-      })
-      lines.push(dblDivider)
-      lines.push(center('FIN RESUMEN DE CARGA'))
-      lines.push(dblDivider)
-      lines.push('\n\n')
-    }
-
-    orders.forEach((order) => {
-      const regularItems = order.items.filter(i => !i.isBonification)
-      const bonifItems = order.items.filter(i => i.isBonification)
-      const discountVal = Number(order.discount || 0)
-      const subtotal = regularItems.reduce((acc, i) => acc + i.unitPrice * (i.deliveredQuantity ?? i.quantity), 0)
-      const finalTotal = Math.max(0, subtotal - discountVal)
-
-      lines.push(center('DISTRIBUIDORA LUNOVA'))
-      lines.push(center('contacto: 74347987'))
-      lines.push(divider)
-      lines.push(`pedido #${order.id}`)
-      lines.push(`vendedor: ${order.preventista?.name || order.distributor?.name || 'Distribución'}`)
-      const dateToUse = order.deliveredAt ? new Date(order.deliveredAt) : new Date(order.createdAt)
-      const dateFormatted = `${dateToUse.toLocaleDateString()} ${dateToUse.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-      lines.push(`fecha entrega: ${dateFormatted}`)
-      lines.push(`cliente: ${order.client.name}`)
-      if (order.client.phone) lines.push(`contacto: ${order.client.phone}`)
-      if (order.client.address) lines.push(`direccion: ${order.client.address}`)
-      lines.push(divider)
-
-      if (width === '58mm') {
-        lines.push('Descripcion         CANT  P.U  total')
-      } else {
-        lines.push('Descripcion                    CANT   P.U    total')
-      }
-      lines.push(divider)
-
-      for (const it of regularItems) {
-        const qty = it.deliveredQuantity ?? it.quantity
-        const cant = `x${qty}`
-        const price = it.unitPrice.toFixed(2)
-        const subt = (it.unitPrice * qty).toFixed(2)
-        const maxLen = width === '58mm' ? 16 : 26
-
-        lines.push(
-          `${it.product.name.substring(0, maxLen).padEnd(maxLen)} ${cant.padStart(4)} ${price.padStart(5)} ${subt.padStart(6)}`
-        )
-      }
-
-      if (bonifItems.length > 0) {
-        lines.push(divider)
-        lines.push('*** BONIFICACIONES (GRATIS) ***')
-        for (const it of bonifItems) {
-          lines.push(`[BONIF] ${it.product.name} x${it.quantity} (GRATIS)`)
-        }
-      }
-
-      lines.push(divider)
-      if (discountVal > 0) {
-        lines.push(row('subtotal:', `Bs. ${subtotal.toFixed(2)}`))
-        lines.push(row('descuento:', `-Bs. ${discountVal.toFixed(2)}`))
-        lines.push(divider)
-      }
-
-      lines.push(row('total:', `Bs. ${finalTotal.toFixed(2)}`))
-      lines.push(divider)
-      if (order.notes) {
-        lines.push(`obs: ${order.notes}`)
-        lines.push(divider)
-      }
-      lines.push(center('gracias por su compra'))
-      lines.push('\n\n\n\n') // Espacio de corte térmico
-      lines.push(`- - - - - - - - - - [ CORTE DE PAPEL #${order.id} ] - - - - - - - - - -`)
-      lines.push('\n\n')
-    })
-
-    return lines.join('\n')
+    const summary = includeSummary
+      ? `DISTRIBUIDORA TRÉBOL\nContacto: 73750520\nRESUMEN DE CARGA\nPedidos: ${orders.length}\nBultos: ${totalBultosGeneral}\nTotal a cobrar: Bs ${totalCobrarGeneral.toFixed(2)}\n\n`
+      : ''
+    return summary + orders.map(order => receiptText(order, width)).join('\n\n')
   }
 
   const handleCopyText = async () => {
@@ -426,7 +192,33 @@ export default function BatchThermalReceiptModal({
   }
 
   const handlePrintAllContinuous = () => {
-    window.print()
+    const paper = printerMode === '58mm' ? '58mm auto' : printerMode === 'a4' ? 'A4 portrait' : '80mm auto'
+    const summary = includeSummary ? `<div class="trebol-receipt" data-paper="${printerMode}">
+      <div class="center brand">DISTRIBUIDORA TRÉBOL</div>
+      <div class="center contact">Contacto: 73750520</div>
+      <div class="rule"></div>
+      <div class="center"><strong>RESUMEN DE CARGA</strong></div>
+      <div class="pair"><span>Pedidos:</span><strong>${orders.length}</strong></div>
+      <div class="pair"><span>Bultos:</span><strong>${totalBultosGeneral}</strong></div>
+      <div class="pair total"><span>Total a cobrar:</span><strong>Bs ${totalCobrarGeneral.toFixed(2)}</strong></div>
+      <div class="rule"></div>
+      ${Object.entries(productSummary).map(([name, data]) => `<div class="pair"><span>${escapeReceipt(name)}</span><strong>${data.regular + data.bonif}</strong></div>`).join('')}
+      <div class="last-rule"></div>
+    </div>` : ''
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><style>
+      @page { size: ${paper}; margin: 0; }
+      html, body { margin: 0; padding: 0; background: white; }
+      ${receiptCss}
+    </style></head><body>${summary}${orders.map(order => receiptBody(order, printerMode)).join('')}</body></html>`
+    const iframe = document.createElement('iframe')
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0'
+    iframe.onload = () => {
+      iframe.contentWindow?.focus()
+      iframe.contentWindow?.print()
+      setTimeout(() => iframe.remove(), 1500)
+    }
+    iframe.srcdoc = html
+    document.body.appendChild(iframe)
   }
 
   // Atajos de teclado: barra espaciadora o Enter imprime la boleta actual y pasa a la siguiente
@@ -463,7 +255,9 @@ export default function BatchThermalReceiptModal({
           #batch-thermal-container {
             display: block !important;
             width: ${printerMode === '80mm' ? '80mm' : printerMode === '58mm' ? '58mm' : '100%'} !important;
-            padding: ${printerMode === 'a4' ? '10mm' : '4mm'} !important;
+            padding: ${printerMode === 'a4' ? '10mm' : '0 2mm'} !important;
+            height: fit-content !important;
+            min-height: 0 !important;
             margin: 0 auto !important;
             background: white !important;
             color: black !important;
@@ -475,8 +269,8 @@ export default function BatchThermalReceiptModal({
           .batch-receipt-item {
             page-break-after: always !important;
             break-after: page !important;
-            margin-bottom: ${printerMode === 'a4' ? '0' : '20mm'} !important;
-            padding-bottom: ${printerMode === 'a4' ? '0' : '15mm'} !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 1mm !important;
           }
           .no-print {
             display: none !important;
@@ -548,7 +342,7 @@ export default function BatchThermalReceiptModal({
                   : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
               }`}
             >
-              80mm (Epson)
+              80mm (impresora predeterminada)
             </button>
             <button
               onClick={() => setPrinterMode('58mm')}
@@ -697,120 +491,9 @@ export default function BatchThermalReceiptModal({
                 </button>
               </div>
 
-              {/* Ticket Visual de la Boleta Actual */}
-              <div
-                style={{ fontFamily: "'Calibri', 'Segoe UI', Arial, sans-serif" }}
-                className={`bg-white shadow-lg p-4 text-black border border-slate-300 transition-all ${
-                  printerMode === '80mm' ? 'w-[280px]' : 'w-[200px]'
-                } text-[13px] font-semibold leading-snug select-text rounded-sm`}
-              >
-                <div className="text-center pb-2">
-                  <h4 className="font-black text-[15px] tracking-wide">DISTRIBUIDORA LUNOVA</h4>
-                  <p className="text-[12px] font-bold text-black mt-0.5">contacto: 74347987</p>
-                  <div className="border-b border-black my-1.5" />
-                </div>
-
-                <div className="space-y-1 mb-2 font-bold text-[12px]">
-                  <div className="font-black text-blue-800">pedido #{currentOrder.id}</div>
-                  <div><span className="font-black">vendedor:</span> {currentOrder.preventista?.name || currentOrder.distributor?.name || 'Distribución'}</div>
-                  <div>
-                    <span className="font-black">fecha:</span>{' '}
-                    {(() => {
-                      const d = currentOrder.deliveredAt ? new Date(currentOrder.deliveredAt) : new Date(currentOrder.createdAt)
-                      return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                    })()}
-                  </div>
-                  <div><span className="font-black">cliente:</span> {currentOrder.client.name}</div>
-                  {currentOrder.client.phone && <div><span className="font-black">contacto:</span> {currentOrder.client.phone}</div>}
-                  {currentOrder.client.address && <div><span className="font-black">direccion:</span> {currentOrder.client.address}</div>}
-                </div>
-
-                <div className="border-b border-black my-1.5" />
-
-                <div className="flex justify-between font-black text-[12px] pb-1 border-b border-black">
-                  <span className="flex-1 min-w-0 pr-1">Descripcion</span>
-                  <span className="w-10 text-center">CANT</span>
-                  <span className="w-12 text-right">P.U</span>
-                  <span className="w-14 text-right">total&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                </div>
-
-                <div className="py-1 space-y-1">
-                  {currentOrder.items.filter(i => !i.isBonification).map(item => {
-                    const qty = item.deliveredQuantity ?? item.quantity
-                    return (
-                      <div key={item.id} className="flex items-start gap-1 text-[12px] font-bold">
-                        <span className="flex-1 min-w-0 pr-1 break-all leading-tight">{item.product.name}</span>
-                        <span className="w-10 shrink-0 text-center font-black">x{qty}</span>
-                        <span className="w-12 shrink-0 text-right">{item.unitPrice.toFixed(2)}</span>
-                        <span className="w-14 shrink-0 text-right font-black">{(item.unitPrice * qty).toFixed(2)}&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {currentOrder.items.some(i => i.isBonification) && (
-                  <div className="my-1 border-t border-dashed border-black pt-1">
-                    <div className="text-[11px] font-black tracking-wide text-black">
-                      🎁 BONIFICACIONES (GRATIS)
-                    </div>
-                    <div className="space-y-1 mt-0.5 font-bold">
-                      {currentOrder.items.filter(i => i.isBonification).map(item => (
-                        <div key={`bon-${item.id}`} className="flex items-start gap-1 text-[12px] text-black">
-                          <span className="flex-1 min-w-0 pr-1 break-all leading-tight">[BONIF] {item.product.name}</span>
-                          <span className="w-10 shrink-0 text-center font-black">x{item.quantity}</span>
-                          <span className="w-12 shrink-0 text-right text-[10px]">0.00</span>
-                          <span className="w-14 shrink-0 text-right font-black text-[10px]">GRATIS</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="border-b border-black my-1.5" />
-
-                {(() => {
-                  const regularItems = currentOrder.items.filter(i => !i.isBonification)
-                  const subtotal = regularItems.reduce((acc, i) => acc + i.unitPrice * (i.deliveredQuantity ?? i.quantity), 0)
-                  const discountVal = Number(currentOrder.discount || 0)
-                  const finalTotal = Math.max(0, subtotal - discountVal)
-                  return (
-                    <div className="space-y-0.5 text-[12px] font-bold">
-                      {discountVal > 0 && (
-                        <>
-                          <div className="flex justify-between text-black">
-                            <span>subtotal:</span>
-                            <span>Bs. {subtotal.toFixed(2)}&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                          </div>
-                          <div className="flex justify-between font-black text-black">
-                            <span>descuento:</span>
-                            <span>-Bs. {discountVal.toFixed(2)}&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                          </div>
-                          <div className="border-b border-dashed border-black my-1" />
-                        </>
-                      )}
-                      <div className="flex justify-between font-black text-[14px] pt-0.5">
-                        <span>total:</span>
-                        <span>Bs. {finalTotal.toFixed(2)}&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                      </div>
-                    </div>
-                  )
-                })()}
-
-                {currentOrder.notes && (
-                  <div className="mt-2 border-t border-dashed border-black pt-1 text-[11px] text-black font-bold">
-                    <span className="font-black">obs:</span> {currentOrder.notes}
-                  </div>
-                )}
-
-                <div className="border-b border-black my-2" />
-                <div className="text-center pb-1 text-[12px] font-bold lowercase">
-                  gracias por su compra
-                </div>
-
-                <div className="text-center my-3 text-[10px] text-emerald-700 font-black tracking-widest bg-emerald-50 py-1 border border-dashed border-emerald-300 rounded">
-                  ✂️ CORTE AUTOMÁTICO DE PAPEL AQUÍ ✂️
-                </div>
-              </div>
+              {/* La vista individual comparte la plantilla de Chrome y Electron. */}
+              <style>{receiptCss}</style>
+              <div className="bg-white shadow-lg border border-slate-300" dangerouslySetInnerHTML={{ __html: receiptBody(currentOrder, printerMode) }} />
             </div>
           ) : (
             /* Vista Continua de Todo el Lote */
@@ -826,11 +509,12 @@ export default function BatchThermalReceiptModal({
                   : 'w-[500px]'
               } text-[13px] font-semibold leading-snug select-text`}
             >
+              <style>{receiptCss}</style>
               {includeSummary && (
                 <div className="batch-receipt-item pb-4 mb-6 border-b-2 border-dashed border-black">
                   <div className="text-center pb-2">
-                    <h4 className="font-black text-[15px] tracking-wide">DISTRIBUIDORA LUNOVA</h4>
-                    <p className="text-[12px] font-bold text-black mt-0.5">contacto: 74347987</p>
+                    <h4 className="font-black text-[15px] tracking-wide">DISTRIBUIDORA TRÉBOL</h4>
+                    <p className="text-[12px] font-bold text-black mt-0.5">contacto: 73750520</p>
                     <p className="text-[12px] font-black text-black mt-0.5">
                       === RESUMEN / MANIFIESTO DE RUTA ===
                     </p>
@@ -881,133 +565,15 @@ export default function BatchThermalReceiptModal({
                 </div>
               )}
 
-              {orders.map((order) => {
-                const regularItems = order.items.filter(i => !i.isBonification)
-                const bonifItems = order.items.filter(i => i.isBonification)
-                const discountVal = Number(order.discount || 0)
-                const subtotal = regularItems.reduce(
-                  (acc, i) => acc + i.unitPrice * (i.deliveredQuantity ?? i.quantity),
-                  0
-                )
-                const finalTotal = Math.max(0, subtotal - discountVal)
-
-                return (
-                  <div key={order.id} className="batch-receipt-item pb-4 mb-6 relative">
-                    <div className="flex justify-between items-center bg-slate-100 px-3 py-1.5 mb-2 rounded border border-slate-200 no-print">
-                      <span className="text-[11px] font-bold text-slate-700">Pedido #{order.id} — {order.client.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveOrder(order.id)}
-                        className="text-[11px] font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2 py-0.5 rounded transition-colors flex items-center gap-1 cursor-pointer"
-                        title="Quitar este pedido de la tirada"
-                      >
-                        <span>🗑️</span>
-                        <span>Quitar boleta</span>
-                      </button>
-                    </div>
-                    <div className="text-center pb-2">
-                      <h4 className="font-black text-[15px] tracking-wide">DISTRIBUIDORA LUNOVA</h4>
-                      <p className="text-[12px] font-bold text-black mt-0.5">contacto: 74347987</p>
-                      <div className="border-b border-black my-1.5" />
-                    </div>
-
-                    <div className="space-y-1 mb-2 font-bold text-[12px]">
-                      <div className="font-black">pedido #{order.id}</div>
-                      <div><span className="font-black">vendedor:</span> {order.preventista?.name || order.distributor?.name || 'Distribución'}</div>
-                      <div>
-                        <span className="font-black">fecha entrega:</span>{' '}
-                        {(() => {
-                          const d = order.deliveredAt ? new Date(order.deliveredAt) : new Date(order.createdAt)
-                          return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                        })()}
-                      </div>
-                      <div><span className="font-black">cliente:</span> {order.client.name}</div>
-                      {order.client.phone && <div><span className="font-black">contacto:</span> {order.client.phone}</div>}
-                      {order.client.address && <div><span className="font-black">direccion:</span> {order.client.address}</div>}
-                    </div>
-
-                    <div className="border-b border-black my-1.5" />
-
-                    <div className="flex justify-between font-black text-[12px] pb-1 border-b border-black">
-                      <span className="flex-1 min-w-0 pr-1">Descripcion</span>
-                      <span className="w-10 text-center">CANT</span>
-                      <span className="w-12 text-right">P.U</span>
-                      <span className="w-14 text-right">total&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                    </div>
-
-                    <div className="py-1 space-y-1">
-                      {regularItems.map(item => {
-                        const qty = item.deliveredQuantity ?? item.quantity
-                        return (
-                          <div key={item.id} className="flex items-start gap-1 text-[12px] font-bold">
-                            <span className="flex-1 min-w-0 pr-1 break-all leading-tight">{item.product.name}</span>
-                            <span className="w-10 shrink-0 text-center font-black">x{qty}</span>
-                            <span className="w-12 shrink-0 text-right">{item.unitPrice.toFixed(2)}</span>
-                            <span className="w-14 shrink-0 text-right font-black">
-                              {(item.unitPrice * qty).toFixed(2)}&nbsp;&nbsp;&nbsp;&nbsp;
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    {bonifItems.length > 0 && (
-                      <div className="my-1 border-t border-dashed border-black pt-1">
-                        <div className="text-[11px] font-black tracking-wide text-black">
-                          🎁 BONIFICACIONES (GRATIS)
-                        </div>
-                        <div className="space-y-1 mt-0.5 font-bold">
-                          {bonifItems.map(item => (
-                            <div key={`bon-${item.id}`} className="flex items-start gap-1 text-[12px] text-black">
-                              <span className="flex-1 min-w-0 pr-1 break-all leading-tight">[BONIF] {item.product.name}</span>
-                              <span className="w-10 shrink-0 text-center font-black">x{item.quantity}</span>
-                              <span className="w-12 shrink-0 text-right text-[10px]">0.00</span>
-                              <span className="w-14 shrink-0 text-right font-black text-[10px]">GRATIS</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="border-b border-black my-1.5" />
-
-                    <div className="space-y-0.5 text-[12px] font-bold">
-                      {discountVal > 0 && (
-                        <>
-                          <div className="flex justify-between text-black">
-                            <span>subtotal:</span>
-                            <span>Bs. {subtotal.toFixed(2)}&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                          </div>
-                          <div className="flex justify-between font-black text-black">
-                            <span>descuento:</span>
-                            <span>-Bs. {discountVal.toFixed(2)}&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                          </div>
-                          <div className="border-b border-dashed border-black my-1" />
-                        </>
-                      )}
-                      <div className="flex justify-between font-black text-[14px] pt-0.5">
-                        <span>total:</span>
-                        <span>Bs. {finalTotal.toFixed(2)}&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                      </div>
-                    </div>
-
-                    {order.notes && (
-                      <div className="mt-2 border-t border-dashed border-black pt-1 text-[11px] text-black font-bold">
-                        <span className="font-black">obs:</span> {order.notes}
-                      </div>
-                    )}
-
-                    <div className="border-b border-black my-2" />
-                    <div className="text-center pb-1 text-[12px] font-bold lowercase">
-                      gracias por su compra
-                    </div>
-
-                    <div className="text-center my-3 text-[10px] text-gray-600 font-bold tracking-widest">
-                      - - - - - - - ✂️ CORTE TICKET #{order.id} - - - - - - -
-                    </div>
+              {orders.map(order => (
+                <div key={order.id} className="batch-receipt-item mb-3">
+                  <div className="no-print flex justify-between items-center bg-slate-100 px-3 py-1.5 mb-2 rounded border border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-700">Pedido #{order.id} — {order.client.name}</span>
+                    <button type="button" onClick={() => handleRemoveOrder(order.id)} className="text-[11px] font-bold text-red-600" title="Quitar este pedido de la tirada">Quitar boleta</button>
                   </div>
-                )
-              })}
+                  <div dangerouslySetInnerHTML={{ __html: receiptBody(order, printerMode) }} />
+                </div>
+              ))}
             </div>
           )}
         </div>

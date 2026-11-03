@@ -32,7 +32,7 @@ export const createProductionEntry = async (data: CreateProductionInput) => {
       createdBy: userId
     },
     include: {
-      product: { select: { id: true, name: true, unit: true, category: true } },
+      product: { select: { id: true, name: true, unit: true } },
       creator: { select: { id: true, name: true } }
     }
   })
@@ -77,7 +77,7 @@ export const getProductionEntries = async (filters: {
   return prisma.productionEntry.findMany({
     where,
     include: {
-      product: { select: { id: true, name: true, unit: true, category: true } },
+      product: { select: { id: true, name: true, unit: true } },
       creator: { select: { id: true, name: true } }
     },
     orderBy: { date: 'desc' },
@@ -98,13 +98,8 @@ export const getProductionEntries = async (filters: {
 export const getWarehouseStockBalance = async (filters: {
   startDate?: string
   endDate?: string
-  category?: string
 }) => {
   const productWhere: any = {}
-  if (filters.category && filters.category !== 'all') {
-    productWhere.category = filters.category
-  }
-
   const products = await prisma.product.findMany({
     where: productWhere,
     orderBy: { name: 'asc' }
@@ -137,7 +132,6 @@ export const getWarehouseStockBalance = async (filters: {
   const orderItems = await prisma.orderItem.findMany({
     where: {
       order: orderWhere,
-      ...(productWhere.category ? { product: productWhere } : {})
     },
     include: {
       order: {
@@ -158,7 +152,6 @@ export const getWarehouseStockBalance = async (filters: {
       name: string
       unit: string
       price: number
-      category: string
       isActive: boolean
     }
     totalProducido: number
@@ -177,7 +170,6 @@ export const getWarehouseStockBalance = async (filters: {
         name: p.name,
         unit: p.unit,
         price: p.price,
-        category: p.category,
         isActive: p.isActive
       },
       totalProducido: 0,

@@ -5855,7 +5855,6 @@ export namespace Prisma {
     description: string | null
     price: number | null
     unit: string | null
-    category: string | null
     isActive: boolean | null
     createdAt: Date | null
   }
@@ -5866,7 +5865,6 @@ export namespace Prisma {
     description: string | null
     price: number | null
     unit: string | null
-    category: string | null
     isActive: boolean | null
     createdAt: Date | null
   }
@@ -5877,7 +5875,6 @@ export namespace Prisma {
     description: number
     price: number
     unit: number
-    category: number
     isActive: number
     createdAt: number
     _all: number
@@ -5900,7 +5897,6 @@ export namespace Prisma {
     description?: true
     price?: true
     unit?: true
-    category?: true
     isActive?: true
     createdAt?: true
   }
@@ -5911,7 +5907,6 @@ export namespace Prisma {
     description?: true
     price?: true
     unit?: true
-    category?: true
     isActive?: true
     createdAt?: true
   }
@@ -5922,7 +5917,6 @@ export namespace Prisma {
     description?: true
     price?: true
     unit?: true
-    category?: true
     isActive?: true
     createdAt?: true
     _all?: true
@@ -6020,7 +6014,6 @@ export namespace Prisma {
     description: string | null
     price: number
     unit: string
-    category: string
     isActive: boolean
     createdAt: Date
     _count: ProductCountAggregateOutputType | null
@@ -6050,7 +6043,6 @@ export namespace Prisma {
     description?: boolean
     price?: boolean
     unit?: boolean
-    category?: boolean
     isActive?: boolean
     createdAt?: boolean
     orderItems?: boolean | Product$orderItemsArgs<ExtArgs>
@@ -6064,7 +6056,6 @@ export namespace Prisma {
     description?: boolean
     price?: boolean
     unit?: boolean
-    category?: boolean
     isActive?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["product"]>
@@ -6075,7 +6066,6 @@ export namespace Prisma {
     description?: boolean
     price?: boolean
     unit?: boolean
-    category?: boolean
     isActive?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["product"]>
@@ -6086,12 +6076,11 @@ export namespace Prisma {
     description?: boolean
     price?: boolean
     unit?: boolean
-    category?: boolean
     isActive?: boolean
     createdAt?: boolean
   }
 
-  export type ProductOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "price" | "unit" | "category" | "isActive" | "createdAt", ExtArgs["result"]["product"]>
+  export type ProductOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "price" | "unit" | "isActive" | "createdAt", ExtArgs["result"]["product"]>
   export type ProductInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     orderItems?: boolean | Product$orderItemsArgs<ExtArgs>
     productionEntries?: boolean | Product$productionEntriesArgs<ExtArgs>
@@ -6112,7 +6101,6 @@ export namespace Prisma {
       description: string | null
       price: number
       unit: string
-      category: string
       isActive: boolean
       createdAt: Date
     }, ExtArgs["result"]["product"]>
@@ -6545,7 +6533,6 @@ export namespace Prisma {
     readonly description: FieldRef<"Product", 'String'>
     readonly price: FieldRef<"Product", 'Float'>
     readonly unit: FieldRef<"Product", 'String'>
-    readonly category: FieldRef<"Product", 'String'>
     readonly isActive: FieldRef<"Product", 'Boolean'>
     readonly createdAt: FieldRef<"Product", 'DateTime'>
   }
@@ -14100,7 +14087,6 @@ export namespace Prisma {
     description: 'description',
     price: 'price',
     unit: 'unit',
-    category: 'category',
     isActive: 'isActive',
     createdAt: 'createdAt'
   };
@@ -14646,7 +14632,6 @@ export namespace Prisma {
     description?: StringNullableFilter<"Product"> | string | null
     price?: FloatFilter<"Product"> | number
     unit?: StringFilter<"Product"> | string
-    category?: StringFilter<"Product"> | string
     isActive?: BoolFilter<"Product"> | boolean
     createdAt?: DateTimeFilter<"Product"> | Date | string
     orderItems?: OrderItemListRelationFilter
@@ -14659,7 +14644,6 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     price?: SortOrder
     unit?: SortOrder
-    category?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     orderItems?: OrderItemOrderByRelationAggregateInput
@@ -14675,7 +14659,6 @@ export namespace Prisma {
     description?: StringNullableFilter<"Product"> | string | null
     price?: FloatFilter<"Product"> | number
     unit?: StringFilter<"Product"> | string
-    category?: StringFilter<"Product"> | string
     isActive?: BoolFilter<"Product"> | boolean
     createdAt?: DateTimeFilter<"Product"> | Date | string
     orderItems?: OrderItemListRelationFilter
@@ -14688,7 +14671,6 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     price?: SortOrder
     unit?: SortOrder
-    category?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     _count?: ProductCountOrderByAggregateInput
@@ -14707,7 +14689,6 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"Product"> | string | null
     price?: FloatWithAggregatesFilter<"Product"> | number
     unit?: StringWithAggregatesFilter<"Product"> | string
-    category?: StringWithAggregatesFilter<"Product"> | string
     isActive?: BoolWithAggregatesFilter<"Product"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Product"> | Date | string
   }
@@ -15438,7 +15419,6 @@ export namespace Prisma {
     description?: string | null
     price: number
     unit: string
-    category?: string
     isActive?: boolean
     createdAt?: Date | string
     orderItems?: OrderItemCreateNestedManyWithoutProductInput
@@ -15451,7 +15431,6 @@ export namespace Prisma {
     description?: string | null
     price: number
     unit: string
-    category?: string
     isActive?: boolean
     createdAt?: Date | string
     orderItems?: OrderItemUncheckedCreateNestedManyWithoutProductInput
@@ -15463,7 +15442,6 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: FloatFieldUpdateOperationsInput | number
     unit?: StringFieldUpdateOperationsInput | string
-    category?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orderItems?: OrderItemUpdateManyWithoutProductNestedInput
@@ -15476,7 +15454,6 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: FloatFieldUpdateOperationsInput | number
     unit?: StringFieldUpdateOperationsInput | string
-    category?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orderItems?: OrderItemUncheckedUpdateManyWithoutProductNestedInput
@@ -15489,7 +15466,6 @@ export namespace Prisma {
     description?: string | null
     price: number
     unit: string
-    category?: string
     isActive?: boolean
     createdAt?: Date | string
   }
@@ -15499,7 +15475,6 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: FloatFieldUpdateOperationsInput | number
     unit?: StringFieldUpdateOperationsInput | string
-    category?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15510,7 +15485,6 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: FloatFieldUpdateOperationsInput | number
     unit?: StringFieldUpdateOperationsInput | string
-    category?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -16364,7 +16338,6 @@ export namespace Prisma {
     description?: SortOrder
     price?: SortOrder
     unit?: SortOrder
-    category?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
   }
@@ -16380,7 +16353,6 @@ export namespace Prisma {
     description?: SortOrder
     price?: SortOrder
     unit?: SortOrder
-    category?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
   }
@@ -16391,7 +16363,6 @@ export namespace Prisma {
     description?: SortOrder
     price?: SortOrder
     unit?: SortOrder
-    category?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
   }
@@ -19745,7 +19716,6 @@ export namespace Prisma {
     description?: string | null
     price: number
     unit: string
-    category?: string
     isActive?: boolean
     createdAt?: Date | string
     productionEntries?: ProductionEntryCreateNestedManyWithoutProductInput
@@ -19757,7 +19727,6 @@ export namespace Prisma {
     description?: string | null
     price: number
     unit: string
-    category?: string
     isActive?: boolean
     createdAt?: Date | string
     productionEntries?: ProductionEntryUncheckedCreateNestedManyWithoutProductInput
@@ -19822,7 +19791,6 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: FloatFieldUpdateOperationsInput | number
     unit?: StringFieldUpdateOperationsInput | string
-    category?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productionEntries?: ProductionEntryUpdateManyWithoutProductNestedInput
@@ -19834,7 +19802,6 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: FloatFieldUpdateOperationsInput | number
     unit?: StringFieldUpdateOperationsInput | string
-    category?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productionEntries?: ProductionEntryUncheckedUpdateManyWithoutProductNestedInput
@@ -20329,7 +20296,6 @@ export namespace Prisma {
     description?: string | null
     price: number
     unit: string
-    category?: string
     isActive?: boolean
     createdAt?: Date | string
     orderItems?: OrderItemCreateNestedManyWithoutProductInput
@@ -20341,7 +20307,6 @@ export namespace Prisma {
     description?: string | null
     price: number
     unit: string
-    category?: string
     isActive?: boolean
     createdAt?: Date | string
     orderItems?: OrderItemUncheckedCreateNestedManyWithoutProductInput
@@ -20410,7 +20375,6 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: FloatFieldUpdateOperationsInput | number
     unit?: StringFieldUpdateOperationsInput | string
-    category?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orderItems?: OrderItemUpdateManyWithoutProductNestedInput
@@ -20422,7 +20386,6 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: FloatFieldUpdateOperationsInput | number
     unit?: StringFieldUpdateOperationsInput | string
-    category?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orderItems?: OrderItemUncheckedUpdateManyWithoutProductNestedInput

@@ -92,7 +92,6 @@ model Product {
   description String?
   price       Float
   unit        String
-  category    String   @default("Categoría A")
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 

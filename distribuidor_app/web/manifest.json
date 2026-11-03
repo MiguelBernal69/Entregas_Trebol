@@ -1,6 +1,6 @@
 {
-    "name": "distribuidor_app",
-    "short_name": "distribuidor_app",
+    "name": "Distribuidora Trébol",
+    "short_name": "Trébol",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

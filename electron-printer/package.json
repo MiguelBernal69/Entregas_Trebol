@@ -1,7 +1,7 @@
 {
-  "name": "lunova-printer",
-  "version": "1.2.0",
-  "description": "Impresora térmica ESC/POS para Distribuidora Lunova",
+  "name": "trebol-printer",
+  "version": "1.1.0",
+  "description": "Impresión térmica automática para Distribuidora Trébol",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -9,8 +9,8 @@
     "build:dir": "electron-builder --win --x64 --dir"
   },
   "build": {
-    "appId": "com.lunova.printer",
-    "productName": "Lunova Printer",
+    "appId": "com.trebol.printer",
+    "productName": "Trébol Printer",
     "win": {
       "target": "nsis",
       "icon": "icon.ico"
@@ -22,6 +22,10 @@
     "files": [
       "main.js",
       "preload.js",
+      "raw-printer.js",
+      "gdi-printer.js",
+      "send-gdi.ps1",
+      "send-raw.ps1",
       "node_modules/**"
     ]
   },

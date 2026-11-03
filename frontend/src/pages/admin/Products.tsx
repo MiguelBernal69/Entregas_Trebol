@@ -3,17 +3,14 @@ import Layout from '../../components/Layout'
 import { getProducts, createProduct, updateProduct, toggleProduct, deleteProduct } from '../../api/products'
 import type { Product } from '../../types'
 
-const CATEGORIES = ['Categoría A', 'Categoría B', 'Categoría C', 'Categoría D']
-
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
-  const [form, setForm] = useState({ name: '', description: '', price: '', unit: '', category: 'Categoría A' })
+  const [form, setForm] = useState({ name: '', description: '', price: '', unit: '' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [activeCategory, setActiveCategory] = useState<string>('Todas')
 
   const fetchProducts = async () => {
     try {
@@ -28,16 +25,9 @@ export default function AdminProducts() {
 
   useEffect(() => { fetchProducts() }, [])
 
-  // Obtener categorías únicas existentes en los productos
-  const existingCategories = ['Todas', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))]
-
-  const filteredProducts = activeCategory === 'Todas'
-    ? products
-    : products.filter(p => p.category === activeCategory)
-
   const openCreate = () => {
     setEditing(null)
-    setForm({ name: '', description: '', price: '', unit: '', category: 'Categoría A' })
+    setForm({ name: '', description: '', price: '', unit: '' })
     setError('')
     setShowModal(true)
   }
@@ -49,7 +39,6 @@ export default function AdminProducts() {
       description: product.description ?? '',
       price: product.price.toString(),
       unit: product.unit,
-      category: product.category ?? 'Categoría A',
     })
     setError('')
     setShowModal(true)
@@ -94,14 +83,6 @@ export default function AdminProducts() {
     }
   }
 
-  // Badge color por categoría
-  const categoryColor: Record<string, string> = {
-    'Categoría A': 'bg-blue-100 text-blue-700',
-    'Categoría B': 'bg-purple-100 text-purple-700',
-    'Categoría C': 'bg-amber-100 text-amber-700',
-    'Categoría D': 'bg-green-100 text-green-700',
-  }
-
   return (
     <Layout>
       <div className="space-y-6">
@@ -118,33 +99,11 @@ export default function AdminProducts() {
           </button>
         </div>
 
-        {/* Filtros por categoría */}
-        <div className="flex gap-2 flex-wrap">
-          {existingCategories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`text-sm font-medium px-4 py-1.5 rounded-full border transition-colors ${
-                activeCategory === cat
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'
-              }`}
-            >
-              {cat}
-              {cat !== 'Todas' && (
-                <span className="ml-1.5 text-xs opacity-70">
-                  ({products.filter(p => p.category === cat).length})
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           {loading ? (
             <div className="text-center text-gray-400 py-12">Cargando...</div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center text-gray-400 py-12">No hay productos en esta categoría</div>
+          ) : products.length === 0 ? (
+            <div className="text-center text-gray-400 py-12">No hay productos</div>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b">
@@ -153,23 +112,17 @@ export default function AdminProducts() {
                   <th className="text-left px-5 py-3 text-gray-600 font-medium">Descripción</th>
                   <th className="text-left px-5 py-3 text-gray-600 font-medium">Precio</th>
                   <th className="text-left px-5 py-3 text-gray-600 font-medium">Unidad</th>
-                  <th className="text-left px-5 py-3 text-gray-600 font-medium">Categoría</th>
                   <th className="text-left px-5 py-3 text-gray-600 font-medium">Estado</th>
                   <th className="text-left px-5 py-3 text-gray-600 font-medium">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filteredProducts.map(product => (
+                {products.map(product => (
                   <tr key={product.id} className="hover:bg-gray-50">
                     <td className="px-5 py-4 font-medium text-gray-800">{product.name}</td>
                     <td className="px-5 py-4 text-gray-500">{product.description ?? '—'}</td>
                     <td className="px-5 py-4 text-gray-800">Bs. {product.price.toFixed(2)}</td>
                     <td className="px-5 py-4 text-gray-500">{product.unit}</td>
-                    <td className="px-5 py-4">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${categoryColor[product.category] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {product.category}
-                      </span>
-                    </td>
                     <td className="px-5 py-4">
                       <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${product.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                         {product.isActive ? 'Activo' : 'Inactivo'}
@@ -218,20 +171,6 @@ export default function AdminProducts() {
               <Field label="Descripción (opcional)" value={form.description} onChange={v => setForm({ ...form, description: v })} />
               <Field label="Precio (Bs.)" type="number" value={form.price} onChange={v => setForm({ ...form, price: v })} required />
               <Field label="Unidad (ej: bolsa, caja, kg)" value={form.unit} onChange={v => setForm({ ...form, unit: v })} required />
-
-              {/* Selector de categoría */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                <select
-                  value={form.category}
-                  onChange={e => setForm({ ...form, category: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">{error}</div>

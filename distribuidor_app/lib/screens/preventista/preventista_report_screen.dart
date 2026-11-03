@@ -114,7 +114,7 @@ class _PreventistaReportScreenState extends State<PreventistaReportScreen> {
     return (_report?['bonificationsSummary'] as List?) ?? [];
   }
 
-  /// Vista previa de Ticket Térmico (formato para impresoras Epson / Bluetooth)
+  /// Vista previa de Ticket Térmico (impresora predeterminada / Bluetooth)
   void _showThermalReceiptPreview() {
     if (_report == null) return;
     final summary = _report!['summary'] as Map<String, dynamic>? ?? {};
@@ -124,7 +124,7 @@ class _PreventistaReportScreenState extends State<PreventistaReportScreen> {
 
     final receiptText = StringBuffer();
     receiptText.writeln("================================");
-    receiptText.writeln("       DISTRIBUIDORA PAPAS      ");
+    receiptText.writeln("       DISTRIBUIDORA TRÉBOL      ");
     receiptText.writeln("       REPORTE DE VENTAS        ");
     receiptText.writeln("================================");
     receiptText.writeln("Periodo: $start al $end");
@@ -283,7 +283,7 @@ class _PreventistaReportScreenState extends State<PreventistaReportScreen> {
           IconButton(
             icon: const Icon(Icons.print_outlined),
             onPressed: _report == null ? null : _showThermalReceiptPreview,
-            tooltip: 'Ticket Térmico / Epson',
+            tooltip: 'Ticket Térmico / impresora predeterminada',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -432,7 +432,7 @@ class _PreventistaReportScreenState extends State<PreventistaReportScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: _MetricCard(
-                                icon: '🥔',
+                                icon: '🍀',
                                 title: 'Bolsas/Unid',
                                 value: '$_totalUnits',
                                 subtitle: 'Volumen total',
@@ -637,7 +637,7 @@ class _PreventistaReportScreenState extends State<PreventistaReportScreen> {
 
                         const SizedBox(height: 16),
 
-                        // ── Botón de Ticket Térmico (Epson / Bluetooth) ──
+                        // ── Botón de Ticket Térmico ──
                         Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
@@ -712,7 +712,7 @@ class _PreventistaReportScreenState extends State<PreventistaReportScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text(
-                                    '🥔 Productos Vendidos en el Periodo',
+                                    '🍀 Productos Vendidos en el Periodo',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
@@ -777,7 +777,7 @@ class _PreventistaReportScreenState extends State<PreventistaReportScreen> {
                                                 ),
                                               ),
                                               Text(
-                                                '${prod['category'] ?? ''} • ${prod['unit'] ?? ''}',
+                                                '${prod['unit'] ?? ''}',
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.grey.shade600,
@@ -943,7 +943,7 @@ class _PreventistaReportScreenState extends State<PreventistaReportScreen> {
                                                 ),
                                               ),
                                               Text(
-                                                '${boni['category'] ?? ''} • ${boni['unit'] ?? ''}',
+                                                '${boni['unit'] ?? ''}',
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.grey.shade600,

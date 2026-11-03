@@ -6,7 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Imprimir una o varias boletas con corte automático
   printEscpos: (orders) => ipcRenderer.invoke('print-escpos', orders),
 
-  // Listar impresoras USB Epson disponibles
+  // Listar impresoras disponibles
   listPrinters: () => ipcRenderer.invoke('list-printers'),
 
   // Indica que estamos dentro de Electron (para que React lo detecte)

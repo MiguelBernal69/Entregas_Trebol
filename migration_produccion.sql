@@ -1,5 +1,5 @@
 -- ================================================
--- MIGRACIÓN SEGURA - Entregas Papas
+-- MIGRACIÓN SEGURA - Distribuidora Trébol
 -- Aplicar en la base de datos de PRODUCCIÓN
 -- 
 -- Todos los campos tienen DEFAULT → los datos

@@ -16,11 +16,10 @@ export const getAll = async (req: AuthRequest, res: Response) => {
 
 export const getInventoryStats = async (req: AuthRequest, res: Response) => {
   try {
-    const { startDate, endDate, category, preventistaId, distributorId } = req.query
+    const { startDate, endDate, preventistaId, distributorId } = req.query
     const stats = await service.getInventoryStats({
       startDate: startDate as string,
       endDate: endDate as string,
-      category: category as string,
       preventistaId: preventistaId ? Number(preventistaId) : undefined,
       distributorId: distributorId ? Number(distributorId) : undefined
     })
@@ -74,11 +73,10 @@ export const removeProduction = async (req: AuthRequest, res: Response) => {
 
 export const getStockBalance = async (req: AuthRequest, res: Response) => {
   try {
-    const { startDate, endDate, category } = req.query
+    const { startDate, endDate } = req.query
     const balance = await prodService.getWarehouseStockBalance({
       startDate: startDate as string,
       endDate: endDate as string,
-      category: category as string
     })
     res.json(balance)
   } catch (error: any) {
@@ -97,7 +95,7 @@ export const getOne = async (req: AuthRequest, res: Response) => {
 
 export const create = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, description, price, unit, category } = req.body
+    const { name, description, price, unit } = req.body
 
     if (!name || !price || !unit) {
       res.status(400).json({ message: 'name, price y unit son requeridos' })
@@ -108,8 +106,7 @@ export const create = async (req: AuthRequest, res: Response) => {
       name,
       description,
       price: Number(price),
-      unit,
-      category
+      unit
     })
     res.status(201).json(product)
   } catch (error: any) {

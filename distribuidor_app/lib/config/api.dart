@@ -4,16 +4,16 @@ class Api {
   //  Cambia SOLO esta línea según el entorno:
   //
   //  DESARROLLO local:
-  //    → Si usas emulador Android:  'http://10.0.2.2:3000/api'
-  //    → Si usas dispositivo físico: 'http://192.168.X.X:3000/api'
+  //    → Si usas emulador Android, 10.0.2.2 representa el localhost del PC.
+  //    → Si usas dispositivo físico, cambia 10.0.2.2 por la IP local del PC.
   //
   //  PRODUCCIÓN (VPS):
   //    → 'http://TU_IP_O_DOMINIO:3000/api'
   //    → Si tienes dominio + SSL: 'https://api.tudominio.com/api'
   // ─────────────────────────────────────────────────────────────
-  static const String baseUrl = 'http://178.105.45.6:3000/api'; // Producción
+  static const String baseUrl = 'http://192.168.100.4:3001/api'; // Local: backend en localhost:3001
 
-  //static const String baseUrl = 'http://10.0.2.2:3000/api'; // Local dev (emulador Android)
+  //static const String baseUrl = 'http://localhost:3001/api'; // Solo web/desktop
   //static const String baseUrl = 'http://192.168.1.148:3000/api'; // Local dev (dispositivo físico WiFi)
   //static const String baseUrl = 'http://192.168.100.4:3000/api';
   //static const String baseUrl = 'http://192.168.3.162:3000/api';

@@ -345,7 +345,7 @@ export default function AdminOrders() {
                       <button
                         onClick={() => setReceiptOrder(order)}
                         className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors flex items-center gap-1"
-                        title="Imprimir Boleta Epson / Bluetooth"
+                        title="Imprimir Boleta en impresora predeterminada"
                       >
                         <span>🖨️</span>
                         <span>Boleta</span>
@@ -477,7 +477,7 @@ export default function AdminOrders() {
                 </div>
               </div>
 
-              {/* Botón Imprimir Boleta Epson / Bluetooth */}
+              {/* Botón Imprimir Boleta */}
               <div className="border-t pt-4">
                 <button
                   type="button"
@@ -488,7 +488,7 @@ export default function AdminOrders() {
                   className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors"
                 >
                   <span>🖨️</span>
-                  <span>Imprimir Boleta (Epson TM-T20III / Bluetooth)</span>
+                  <span>Imprimir Boleta (impresora predeterminada)</span>
                 </button>
               </div>
             </div>
@@ -496,7 +496,7 @@ export default function AdminOrders() {
         </div>
       )}
 
-      {/* Modal Térmico Epson / Bluetooth Individual */}
+      {/* Modal térmico / impresora predeterminada */}
       <OrderThermalReceiptModal
         order={receiptOrder}
         onClose={() => setReceiptOrder(null)}
