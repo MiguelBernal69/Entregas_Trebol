@@ -13,7 +13,7 @@ Sistema de distribución con backend, panel web y aplicación móvil.
 
 ### Impresión automática USB en Windows
 
-El módulo `electron-printer` imprime las boletas automáticamente en `POS80 Printer` mediante el controlador de Windows, con letra Calibri y sin abrir el diálogo de impresión. La impresora debe estar instalada en Windows con ese nombre. La aplicación usa `http://localhost:5173` para el panel web local.
+El módulo `electron-printer` imprime las boletas automáticamente en `POS80 Printer` mediante el controlador de Windows, con letra Calibri y sin abrir el diálogo de impresión. Debe ejecutarse en la PC con la impresora USB instalada. Por defecto abre `http://169.58.255.180`; `TREBOL_SERVER_URL` permite cambiar esa URL sin modificar el código.
 
 Las boletas de Chrome comparten la misma plantilla en impresión individual, por lote y continua. El texto copiable y la boleta móvil mantienen el mismo orden de datos y las columnas Descripcion, CANT, P.U. y total, ajustadas al ancho de 80 o 58 mm.
 
@@ -24,6 +24,8 @@ npm start
 ```
 
 Para usar otro nombre de impresora o una URL publicada, define `TREBOL_PRINTER_NAME` o `TREBOL_SERVER_URL` antes de iniciar Electron. El instalador de Windows se crea con `npm run build`.
+
+Si la versión instalada muestra un error que menciona `app.asar/send-gdi.ps1`, genera de nuevo el instalador con `npm run build` desde el código actualizado y vuelve a instalarlo en la PC de impresión. Los scripts de PowerShell deben estar en la carpeta `resources` de la instalación.
 
 En la POS80 probada, el avance final del controlador quedó en **12 mm** para que el corte deje completo «Gracias por su compra» sin exceso de papel. Si instalas la impresora en otra computadora, revisa esa opción en las propiedades del controlador o ajústala en PowerShell:
 

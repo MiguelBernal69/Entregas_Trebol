@@ -178,7 +178,7 @@ export default function BatchThermalReceiptModal({
 
   const generateAllReceiptsText = (width: '80mm' | '58mm' | 'a4'): string => {
     const summary = includeSummary
-      ? `DISTRIBUIDORA TRÉBOL\nContacto: 73750520\nRESUMEN DE CARGA\nPedidos: ${orders.length}\nBultos: ${totalBultosGeneral}\nTotal a cobrar: Bs ${totalCobrarGeneral.toFixed(2)}\n\n`
+      ? `DISTRIBUIDORA TRÉBOL\nDistribuidora y comercio externo\nContacto\n73750520-67519917\nRESUMEN DE CARGA\nPedidos: ${orders.length}\nBultos: ${totalBultosGeneral}\nTotal a cobrar: Bs ${totalCobrarGeneral.toFixed(2)}\n\n`
       : ''
     return summary + orders.map(order => receiptText(order, width)).join('\n\n')
   }
@@ -195,7 +195,9 @@ export default function BatchThermalReceiptModal({
     const paper = printerMode === '58mm' ? '58mm auto' : printerMode === 'a4' ? 'A4 portrait' : '80mm auto'
     const summary = includeSummary ? `<div class="trebol-receipt" data-paper="${printerMode}">
       <div class="center brand">DISTRIBUIDORA TRÉBOL</div>
-      <div class="center contact">Contacto: 73750520</div>
+      <div class="center tagline">Distribuidora y comercio externo</div>
+      <div class="center contact">Contacto</div>
+      <div class="center contact">73750520-67519917</div>
       <div class="rule"></div>
       <div class="center"><strong>RESUMEN DE CARGA</strong></div>
       <div class="pair"><span>Pedidos:</span><strong>${orders.length}</strong></div>
@@ -514,7 +516,9 @@ export default function BatchThermalReceiptModal({
                 <div className="batch-receipt-item pb-4 mb-6 border-b-2 border-dashed border-black">
                   <div className="text-center pb-2">
                     <h4 className="font-black text-[15px] tracking-wide">DISTRIBUIDORA TRÉBOL</h4>
-                    <p className="text-[12px] font-bold text-black mt-0.5">contacto: 73750520</p>
+                    <p className="text-[11px] font-bold text-black">Distribuidora y comercio externo</p>
+                    <p className="text-[12px] font-bold text-black">Contacto</p>
+                    <p className="text-[12px] font-bold text-black">73750520-67519917</p>
                     <p className="text-[12px] font-black text-black mt-0.5">
                       === RESUMEN / MANIFIESTO DE RUTA ===
                     </p>

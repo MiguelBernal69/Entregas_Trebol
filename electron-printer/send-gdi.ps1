@@ -51,7 +51,7 @@ function Add-TableRow([string]$name, [string]$qty, [string]$unit, [string]$total
         @{ Text=$name; X=0.0; W=115.0; Font=$nameFont; Align='left' },
         @{ Text=$qty; X=115.0; W=45.0; Font=$numberFont; Align='center' },
         @{ Text=$unit; X=160.0; W=55.0; Font=$numberFont; Align='right' },
-        @{ Text=$total; X=215.0; W=65.0; Font=$numberFont; Align='right' }
+        @{ Text=$total; X=215.0; W=55.0; Font=$numberFont; Align='right' }
     )
     $height = 0.0
     foreach ($column in $columns) {
@@ -72,7 +72,9 @@ function Add-Rule {
 }
 
 Add-Text ('DISTRIBUIDORA TR' + [char]0x00C9 + 'BOL') $fontHeader $left $width 'center' 0
-Add-Text 'Contacto: 73750520' $fontSmall $left $width 'center' 1
+Add-Text 'Distribuidora y comercio externo' $fontSmall $left $width 'center' 0
+Add-Text 'Contacto' $fontSmall $left $width 'center' 0
+Add-Text '73750520-67519917' $fontSmall $left $width 'center' 1
 Add-Rule
 Add-Text "Pedido #$($order.id)" $fontBold $left $width 'left' 1
 $seller = if ($order.preventista.name) { $order.preventista.name } elseif ($order.distributor.name) { $order.distributor.name } else { 'Distribucion' }
@@ -114,6 +116,9 @@ Add-Pair 'TOTAL:' ("Bs {0:N2}" -f [Math]::Max(0, $subtotal - $discount)) $fontTo
 if ($order.notes) { Add-Text "Obs: $($order.notes)" $fontSmall $left $width 'left' 1 }
 Add-Rule
 Add-Text 'Gracias por su compra' $fontNormal $left $width 'center' 0
+$script:y += 3
+$entries.Add(@{ Type='clovers'; Y=$script:y })
+$script:y += 28
 $script:y += 4
 $entries.Add(@{ Type='rule'; Y=$script:y })
 $paperHeight = [int][Math]::Ceiling($script:y + 2)
@@ -125,6 +130,15 @@ $handler = [Drawing.Printing.PrintPageEventHandler] {
     foreach ($entry in $entries) {
         if ($entry.Type -eq 'rule') {
             $e.Graphics.DrawLine([Drawing.Pens]::Black, $left, $entry.Y, ($left + $width), $entry.Y)
+            continue
+        }
+        if ($entry.Type -eq 'clovers') {
+            foreach ($x in @(110.0, 146.0)) {
+                $e.Graphics.FillEllipse([Drawing.Brushes]::Black, ($x + 8), $entry.Y, 10, 10)
+                $e.Graphics.FillEllipse([Drawing.Brushes]::Black, ($x + 2), ($entry.Y + 6), 10, 10)
+                $e.Graphics.FillEllipse([Drawing.Brushes]::Black, ($x + 14), ($entry.Y + 6), 10, 10)
+                $e.Graphics.FillRectangle([Drawing.Brushes]::Black, ($x + 12), ($entry.Y + 15), 2, 11)
+            }
             continue
         }
         $format = New-Object Drawing.StringFormat

@@ -112,6 +112,11 @@ export const deleteRegion = async (id: number) => {
   const existing = await prisma.region.findUnique({ where: { id } })
   if (!existing) throw new Error('Región no encontrada')
 
+  const assignments = await prisma.userRegion.count({ where: { regionId: id } })
+  if (assignments > 0) {
+    throw new Error(`Esta zona está asignada a ${assignments} usuario(s). Quita sus asignaciones en "Asignar zonas" antes de eliminarla.`)
+  }
+
   // Limpiar regionId de clientes y pedidos activos que pertenecían a esta región
   await pool.query(
     `UPDATE "Order" SET "regionId" = NULL WHERE "regionId" = $1 AND status IN ('pendiente', 'aceptado', 'asignado')`,

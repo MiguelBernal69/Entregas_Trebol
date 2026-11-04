@@ -24,9 +24,11 @@
       "preload.js",
       "raw-printer.js",
       "gdi-printer.js",
-      "send-gdi.ps1",
-      "send-raw.ps1",
       "node_modules/**"
+    ],
+    "extraResources": [
+      { "from": "send-gdi.ps1", "to": "send-gdi.ps1" },
+      { "from": "send-raw.ps1", "to": "send-raw.ps1" }
     ]
   },
   "devDependencies": {

@@ -2,6 +2,9 @@ import type { Order } from '../types'
 
 export type ReceiptPaper = '80mm' | '58mm' | 'a4'
 
+const clover = `<svg width="26" height="28" viewBox="0 0 26 28" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="#000"><circle cx="13" cy="7" r="5"/><circle cx="7" cy="13" r="5"/><circle cx="19" cy="13" r="5"/><rect x="12" y="16" width="2" height="10"/></g></svg>`
+export const receiptClovers = `<div class="clovers">${clover}${clover}</div>`
+
 export const receiptCss = `
   .trebol-receipt { box-sizing: border-box; width: 72mm; margin: 0 auto; padding: 1mm 0 0; background: #fff; color: #000; font: 700 14px/1.25 Calibri, 'Segoe UI', Arial, sans-serif; }
   .trebol-receipt * { box-sizing: border-box; }
@@ -9,6 +12,7 @@ export const receiptCss = `
   .trebol-receipt[data-paper="a4"] { width: 72mm; }
   .trebol-receipt .center { text-align: center; }
   .trebol-receipt .brand { font-size: 18px; font-weight: 900; }
+  .trebol-receipt .tagline { font-size: 11px; }
   .trebol-receipt .contact { font-size: 12px; }
   .trebol-receipt .rule { border-top: 1px solid #000; margin: 5px 0; }
   .trebol-receipt .details { font-size: 12px; overflow-wrap: anywhere; }
@@ -17,6 +21,7 @@ export const receiptCss = `
   .trebol-receipt .columns .name { overflow-wrap: anywhere; }
   .trebol-receipt .columns .qty { text-align: center; white-space: nowrap; }
   .trebol-receipt .columns .price, .trebol-receipt .columns .amount { text-align: right; white-space: nowrap; }
+  .trebol-receipt .columns .amount { padding-right: 2ch; }
   .trebol-receipt .table-head { font-weight: 900; border-bottom: 1px solid #000; padding-bottom: 2px; }
   .trebol-receipt .item { padding: 2px 0; }
   .trebol-receipt .bonifications { font-size: 12px; }
@@ -24,10 +29,13 @@ export const receiptCss = `
   .trebol-receipt .pair strong { white-space: nowrap; }
   .trebol-receipt .total { font-size: 15px; font-weight: 900; }
   .trebol-receipt .thanks { text-align: center; font-size: 12px; margin-top: 6px; }
+  .trebol-receipt .clovers { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
   .trebol-receipt .last-rule { border-top: 1px solid #000; margin-top: 4px; }
   .trebol-receipt[data-paper="58mm"] .brand { font-size: 14px; }
+  .trebol-receipt[data-paper="58mm"] .tagline { font-size: 9px; }
   .trebol-receipt[data-paper="58mm"] .contact, .trebol-receipt[data-paper="58mm"] .details, .trebol-receipt[data-paper="58mm"] .pair, .trebol-receipt[data-paper="58mm"] .thanks { font-size: 10px; }
   .trebol-receipt[data-paper="58mm"] .columns { grid-template-columns: 40% 17% 20% 23%; font-size: 9px; }
+  .trebol-receipt[data-paper="58mm"] .columns .amount { padding-right: 1ch; }
   .trebol-receipt[data-paper="58mm"] .total { font-size: 12px; }
 `
 
@@ -49,7 +57,9 @@ export function receiptBody(order: Order, paper: ReceiptPaper = '80mm'): string 
 
   return `<div class="trebol-receipt" data-paper="${paper}">
     <div class="center brand">DISTRIBUIDORA TRÉBOL</div>
-    <div class="center contact">Contacto: 73750520</div>
+    <div class="center tagline">Distribuidora y comercio externo</div>
+    <div class="center contact">Contacto</div>
+    <div class="center contact">73750520-67519917</div>
     <div class="rule"></div>
     <div class="details">
       <div><strong>Pedido #${escapeReceipt(order.id)}</strong></div>
@@ -73,6 +83,7 @@ export function receiptBody(order: Order, paper: ReceiptPaper = '80mm'): string 
     ${order.notes ? `<div class="rule"></div><div class="details">Obs: ${escapeReceipt(order.notes)}</div>` : ''}
     <div class="rule"></div>
     <div class="thanks">Gracias por su compra</div>
+    ${receiptClovers}
     <div class="last-rule"></div>
   </div>`
 }
@@ -94,13 +105,13 @@ export function receiptText(order: Order, paper: ReceiptPaper = '80mm'): string 
   const center = (value: string) => value.padStart(Math.floor((totalWidth + value.length) / 2))
   const row = (name: string, qty: string, price: string, amount: string) =>
     name.slice(0, widths[0]).padEnd(widths[0]) +
-    qty.padStart(widths[1]) + price.padStart(widths[2]) + amount.padStart(widths[3])
+    qty.padStart(widths[1]) + price.padStart(widths[2]) + amount.padStart(widths[3] - 2) + '  '
   const regular = order.items.filter(item => !item.isBonification)
   const bonus = order.items.filter(item => item.isBonification)
   const subtotal = regular.reduce((sum, item) => sum + item.unitPrice * (item.deliveredQuantity ?? item.quantity), 0)
   const discount = Number(order.discount || 0)
   const date = new Date(order.deliveredAt || order.createdAt)
-  const lines = [center('DISTRIBUIDORA TRÉBOL'), center('Contacto: 73750520'), rule]
+  const lines = [center('DISTRIBUIDORA TRÉBOL'), center('Distribuidora y comercio externo'), center('Contacto'), center('73750520-67519917'), rule]
   lines.push(`Pedido #${order.id}`)
   lines.push(`Vendedor: ${order.preventista?.name || order.distributor?.name || 'Distribución'}`)
   if (!Number.isNaN(date.getTime())) lines.push(`Fecha entrega: ${date.toLocaleString('es-BO')}`)
@@ -125,6 +136,6 @@ export function receiptText(order: Order, paper: ReceiptPaper = '80mm'): string 
   }
   lines.push(`TOTAL: Bs ${Math.max(0, subtotal - discount).toFixed(2)}`)
   if (order.notes) lines.push(`Obs: ${order.notes}`)
-  lines.push(rule, center('Gracias por su compra'), rule)
+  lines.push(rule, center('Gracias por su compra'), center('☘   ☘'), rule)
   return lines.join('\n')
 }

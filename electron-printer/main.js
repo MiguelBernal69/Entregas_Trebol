@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
 const { printReceiptGdi } = require('./gdi-printer')
 
-const SERVER_URL = process.env.TREBOL_SERVER_URL || 'http://localhost:5173'
+const SERVER_URL = process.env.TREBOL_SERVER_URL || 'http://169.58.255.180'
 
 let mainWindow
 
@@ -123,7 +123,9 @@ function buildReceiptHtml(order) {
   <body>
     <div class="text-center">
       <div style="font-size: 18px; font-weight: 900;">DISTRIBUIDORA TRÉBOL</div>
-      <div style="font-size: 12px;">contacto: 73750520</div>
+      <div style="font-size: 11px;">Distribuidora y comercio externo</div>
+      <div style="font-size: 12px;">Contacto</div>
+      <div style="font-size: 12px;">73750520-67519917</div>
       <div class="border-b"></div>
     </div>
     <div style="font-size: 12px;">
@@ -161,6 +163,9 @@ function buildReceiptHtml(order) {
     ` : ''}
     <div class="border-b"></div>
     <div class="text-center" style="font-size: 13px; margin-top: 6px;">gracias por su compra</div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-top:4px">
+      ${[0, 1].map(() => '<svg width="26" height="28" viewBox="0 0 26 28" xmlns="http://www.w3.org/2000/svg"><g fill="#000"><circle cx="13" cy="7" r="5"/><circle cx="7" cy="13" r="5"/><circle cx="19" cy="13" r="5"/><rect x="12" y="16" width="2" height="10"/></g></svg>').join('')}
+    </div>
     <div style="text-align: center; font-size: 9px; margin-top: 4px; letter-spacing: 3px; color: #333;">- - - - - - - - - - - - - - -</div>
     <div class="feed-space">&nbsp;</div>
   </body>

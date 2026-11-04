@@ -97,7 +97,9 @@ class OrderReceiptModal extends StatefulWidget {
     }
 
     buffer.writeln(center("DISTRIBUIDORA TRÉBOL"));
-    buffer.writeln(center("Contacto: 73750520"));
+    buffer.writeln(center("Distribuidora y comercio externo"));
+    buffer.writeln(center("Contacto"));
+    buffer.writeln(center("73750520-67519917"));
     buffer.writeln(sepSingle);
     buffer.writeln("Pedido #${order.id}");
     buffer.writeln("Vendedor: ${order.preventistaName ?? distributorName ?? 'Distribución'}");
@@ -117,10 +119,8 @@ class OrderReceiptModal extends StatefulWidget {
     final totalWidth = is80mm ? 10 : 9;
 
     String tableRow(String name, String qty, String price, String amount) =>
-        padRight(name, nameWidth) +
-        padLeft(qty, qtyWidth) +
-        padLeft(price, priceWidth) +
-        padLeft(amount, totalWidth);
+        '${padRight(name, nameWidth)}${padLeft(qty, qtyWidth)}'
+        '${padLeft(price, priceWidth)}${padLeft(amount, totalWidth - 2)}  ';
 
     buffer.writeln(tableRow('Descripcion', 'CANT', 'P.U.', 'total'));
     buffer.writeln(sepSingle);
@@ -169,6 +169,7 @@ class OrderReceiptModal extends StatefulWidget {
 
     buffer.writeln(sepSingle);
     buffer.writeln(center("Gracias por su compra"));
+    buffer.writeln(center("☘   ☘"));
     buffer.writeln(sepSingle);
 
     return buffer.toString();
@@ -248,7 +249,25 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                 ),
                 pw.Center(
                   child: pw.Text(
-                    'Contacto: 73750520',
+                    'Distribuidora y comercio externo',
+                    style: pw.TextStyle(
+                      font: regularFont,
+                      fontSize: _is80mm ? 8.5 : 7,
+                    ),
+                  ),
+                ),
+                pw.Center(
+                  child: pw.Text(
+                    'Contacto',
+                    style: pw.TextStyle(
+                      font: boldFont,
+                      fontSize: _is80mm ? 10 : 9,
+                    ),
+                  ),
+                ),
+                pw.Center(
+                  child: pw.Text(
+                    '73750520-67519917',
                     style: pw.TextStyle(
                       font: boldFont,
                       fontSize: _is80mm ? 10 : 9,
@@ -274,7 +293,7 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                     pw.Expanded(child: pw.Text('Descripcion', style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
                     pw.SizedBox(width: qtyColumn, child: pw.Text('CANT', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
                     pw.SizedBox(width: priceColumn, child: pw.Text('P.U.', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
-                    pw.SizedBox(width: totalColumn, child: pw.Text('total', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
+                    pw.SizedBox(width: totalColumn, child: pw.Padding(padding: pw.EdgeInsets.only(right: _is80mm ? 6 : 3), child: pw.Text('total', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize)))),
                   ],
                 ),
                 pw.Divider(thickness: 0.5),
@@ -291,7 +310,7 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                         pw.Expanded(child: pw.Text(item.productName, style: pw.TextStyle(fontSize: itemFontSize))),
                         pw.SizedBox(width: qtyColumn, child: pw.Text('x$qty', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
                         pw.SizedBox(width: priceColumn, child: pw.Text(item.unitPrice.toStringAsFixed(2), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: itemFontSize))),
-                        pw.SizedBox(width: totalColumn, child: pw.Text(itemTotal.toStringAsFixed(2), textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize))),
+                        pw.SizedBox(width: totalColumn, child: pw.Padding(padding: pw.EdgeInsets.only(right: _is80mm ? 6 : 3), child: pw.Text(itemTotal.toStringAsFixed(2), textAlign: pw.TextAlign.right, style: pw.TextStyle(font: boldFont, fontSize: itemFontSize)))),
                       ],
                     ),
                   );
@@ -356,6 +375,14 @@ class _OrderReceiptModalState extends State<OrderReceiptModal> {
                   child: pw.Text(
                     'Gracias por su compra',
                     style: pw.TextStyle(font: boldFont, fontSize: 8.5),
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Center(
+                  child: pw.SvgImage(
+                    svg: '''<svg xmlns="http://www.w3.org/2000/svg" width="62" height="28" viewBox="0 0 62 28"><g fill="#000000"><circle cx="13" cy="7" r="5"/><circle cx="7" cy="13" r="5"/><circle cx="19" cy="13" r="5"/><rect x="12" y="16" width="2" height="10"/><circle cx="49" cy="7" r="5"/><circle cx="43" cy="13" r="5"/><circle cx="55" cy="13" r="5"/><rect x="48" y="16" width="2" height="10"/></g></svg>''',
+                    width: 62,
+                    height: 28,
                   ),
                 ),
                 pw.Divider(thickness: 0.5),

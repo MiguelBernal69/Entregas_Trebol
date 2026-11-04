@@ -11,11 +11,12 @@ class Api {
   //    → flutter build apk --release --dart-define=API_BASE_URL=http://TU_IP_PUBLICA/api
   //    → Si tienes dominio + SSL: 'https://api.tudominio.com/api'
   // ─────────────────────────────────────────────────────────────
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://192.168.100.4:3001/api',
-  );
+  // static const String baseUrl = String.fromEnvironment(
+  //   'API_BASE_URL',
+  //   defaultValue: 'http://192.168.100.4:3001/api',
+  // );
 
+  static const String baseUrl = 'http://169.58.255.180:3001/api'; // VPS contabo
   //static const String baseUrl = 'http://localhost:3001/api'; // Solo web/desktop
   //static const String baseUrl = 'http://192.168.1.148:3000/api'; // Local dev (dispositivo físico WiFi)
   //static const String baseUrl = 'http://192.168.100.4:3000/api';

@@ -1,5 +1,6 @@
 const { spawn } = require('node:child_process')
 const path = require('node:path')
+const { app } = require('electron')
 
 const WIDTH = 42
 
@@ -53,7 +54,7 @@ function receiptBytes(order) {
   const add = value => lines.push(...wrap(value))
   const separator = '-'.repeat(WIDTH)
 
-  lines.push(center('DISTRIBUIDORA TREBOL'), center('Contacto: 73750520'), separator)
+  lines.push(center('DISTRIBUIDORA TREBOL'), center('Distribuidora y comercio externo'), center('Contacto'), center('73750520-67519917'), separator)
   add(`Pedido #${order.id}`)
   add(`Vendedor: ${order.preventista?.name || order.distributor?.name || 'Distribucion'}`)
   if (!Number.isNaN(date.getTime())) add(`Fecha: ${date.toLocaleString('es-BO')}`)
@@ -94,9 +95,10 @@ function receiptBytes(order) {
 
 function sendRaw(printerName, bytes) {
   return new Promise((resolve, reject) => {
+    const scriptPath = path.join(app.isPackaged ? process.resourcesPath : __dirname, 'send-raw.ps1')
     const child = spawn('powershell.exe', [
       '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
-      '-File', path.join(__dirname, 'send-raw.ps1'), '-PrinterName', printerName,
+      '-File', scriptPath, '-PrinterName', printerName,
     ], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] })
     let errorOutput = ''
     child.stderr.setEncoding('utf8')

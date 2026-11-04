@@ -1,11 +1,13 @@
 const { spawn } = require('node:child_process')
 const path = require('node:path')
+const { app } = require('electron')
 
 function printReceiptGdi(printerName, order) {
   return new Promise((resolve, reject) => {
+    const scriptPath = path.join(app.isPackaged ? process.resourcesPath : __dirname, 'send-gdi.ps1')
     const child = spawn('powershell.exe', [
       '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
-      '-File', path.join(__dirname, 'send-gdi.ps1'), '-PrinterName', printerName,
+      '-File', scriptPath, '-PrinterName', printerName,
     ], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] })
     let errorOutput = ''
     child.stderr.setEncoding('utf8')

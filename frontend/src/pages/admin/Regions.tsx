@@ -91,6 +91,7 @@ export default function AdminRegions() {
   const [form, setForm] = useState({ name: '', color: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [deleteError, setDeleteError] = useState('')
   const [recalculating, setRecalculating] = useState(false)
   const [recalcResult, setRecalcResult] = useState<{ clientesAsignados: number; pedidosActualizados: number } | null>(null)
 
@@ -168,11 +169,13 @@ export default function AdminRegions() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Eliminar esta zona? No podrás filtrar pedidos por ella.')) return
+    if (!confirm('¿Eliminar esta zona? Los clientes y pedidos dejarán de tenerla asignada, y ya no podrás filtrar pedidos por ella.')) return
+    setDeleteError('')
     try {
       await deleteRegion(id)
       fetchData()
-    } catch (err) {
+    } catch (err: any) {
+      setDeleteError(err.response?.data?.message ?? 'No se pudo eliminar la zona. Intenta nuevamente.')
       console.error(err)
     }
   }
@@ -203,6 +206,7 @@ export default function AdminRegions() {
             <p className="text-sm text-gray-500 mt-1">
               {isAdmin ? "Dibuja polígonos en el mapa para organizar los pedidos." : "Zonas de reparto actuales."}
             </p>
+            {deleteError && <p role="alert" className="text-xs text-red-600 mt-2">{deleteError}</p>}
             {isAdmin && (
               <div className="mt-3">
                 <button
