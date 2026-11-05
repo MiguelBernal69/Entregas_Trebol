@@ -57,7 +57,7 @@ export function receiptBody(order: Order, paper: ReceiptPaper = '80mm'): string 
 
   return `<div class="trebol-receipt" data-paper="${paper}">
     <div class="center brand">DISTRIBUIDORA TRÉBOL</div>
-    <div class="center tagline">Distribuidora y comercio externo</div>
+    <div class="center tagline">Distribución y comercio externo</div>
     <div class="center contact">Contacto</div>
     <div class="center contact">73750520-67519917</div>
     <div class="rule"></div>
@@ -111,7 +111,7 @@ export function receiptText(order: Order, paper: ReceiptPaper = '80mm'): string 
   const subtotal = regular.reduce((sum, item) => sum + item.unitPrice * (item.deliveredQuantity ?? item.quantity), 0)
   const discount = Number(order.discount || 0)
   const date = new Date(order.deliveredAt || order.createdAt)
-  const lines = [center('DISTRIBUIDORA TRÉBOL'), center('Distribuidora y comercio externo'), center('Contacto'), center('73750520-67519917'), rule]
+  const lines = [center('DISTRIBUIDORA TRÉBOL'), center('Distribución y comercio externo'), center('Contacto'), center('73750520-67519917'), rule]
   lines.push(`Pedido #${order.id}`)
   lines.push(`Vendedor: ${order.preventista?.name || order.distributor?.name || 'Distribución'}`)
   if (!Number.isNaN(date.getTime())) lines.push(`Fecha entrega: ${date.toLocaleString('es-BO')}`)

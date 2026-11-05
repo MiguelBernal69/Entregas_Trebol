@@ -97,7 +97,7 @@ class OrderReceiptModal extends StatefulWidget {
     }
 
     buffer.writeln(center("DISTRIBUIDORA TRÉBOL"));
-    buffer.writeln(center("Distribuidora y comercio externo"));
+    buffer.writeln(center("Distribución y comercio externo"));
     buffer.writeln(center("Contacto"));
     buffer.writeln(center("73750520-67519917"));
     buffer.writeln(sepSingle);

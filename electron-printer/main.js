@@ -123,7 +123,7 @@ function buildReceiptHtml(order) {
   <body>
     <div class="text-center">
       <div style="font-size: 18px; font-weight: 900;">DISTRIBUIDORA TRÉBOL</div>
-      <div style="font-size: 11px;">Distribuidora y comercio externo</div>
+      <div style="font-size: 11px;">Distribución y comercio externo</div>
       <div style="font-size: 12px;">Contacto</div>
       <div style="font-size: 12px;">73750520-67519917</div>
       <div class="border-b"></div>

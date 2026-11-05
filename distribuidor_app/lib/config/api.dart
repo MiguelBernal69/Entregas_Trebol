@@ -1,7 +1,7 @@
 class Api {
   // ─────────────────────────────────────────────────────────────
   //  CONFIGURACIÓN DE ENTORNO
-  //  El valor local se usa si no se define API_BASE_URL al compilar.
+  //  El VPS se usa por defecto; API_BASE_URL permite cambiarlo al compilar.
   //
   //  DESARROLLO local:
   //    → Si usas emulador Android, 10.0.2.2 representa el localhost del PC.
@@ -11,16 +11,10 @@ class Api {
   //    → flutter build apk --release --dart-define=API_BASE_URL=http://TU_IP_PUBLICA/api
   //    → Si tienes dominio + SSL: 'https://api.tudominio.com/api'
   // ─────────────────────────────────────────────────────────────
-  // static const String baseUrl = String.fromEnvironment(
-  //   'API_BASE_URL',
-  //   defaultValue: 'http://192.168.100.4:3001/api',
-  // );
-
-  static const String baseUrl = 'http://169.58.255.180:3001/api'; // VPS contabo
-  //static const String baseUrl = 'http://localhost:3001/api'; // Solo web/desktop
-  //static const String baseUrl = 'http://192.168.1.148:3000/api'; // Local dev (dispositivo físico WiFi)
-  //static const String baseUrl = 'http://192.168.100.4:3000/api';
-  //static const String baseUrl = 'http://192.168.3.162:3000/api';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://169.58.255.180/api',
+  );
 
   /// Convierte la photoUrl guardada en la DB a una URL completa accesible.
   /// Maneja tanto rutas relativas ('uploads/clients/foto.jpg')

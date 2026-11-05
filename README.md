@@ -68,13 +68,13 @@ En desarrollo, el frontend usa el backend en `http://localhost:3001`.
 
 ### Aplicación móvil
 
-Para Android Emulator, `distribuidor_app/lib/config/api.dart` usa:
+La aplicación usa `http://169.58.255.180/api` por defecto. Para probar el backend local en Android Emulator, inicia con:
 
-```text
-http://10.0.2.2:3001/api
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3001/api
 ```
 
-`10.0.2.2` representa el `localhost` de la computadora desde el emulador Android. En un celular físico debes reemplazarlo por la IP local de la computadora, por ejemplo `http://192.168.1.100:3001/api`.
+`10.0.2.2` representa el `localhost` de la computadora desde el emulador Android. En un celular físico con backend local usa `--dart-define=API_BASE_URL=http://IP_LOCAL_DE_TU_PC:3001/api`.
 
 ```bash
 cd distribuidor_app
@@ -201,5 +201,41 @@ flutter build apk --release --dart-define=API_BASE_URL=http://TU_IP_PUBLICA/api
 ```
 
 El acceso HTTP por IP es útil para las pruebas iniciales; antes de usar contraseñas de clientes o administrador en producción configura un dominio con HTTPS y reconstruye el APK con la URL `https://.../api`.
+
+### Actualizar un VPS ya instalado
+
+En la computadora de desarrollo, envía los cambios de código de la rama `miguel`:
+
+```bash
+git add README.md distribuidor_app/lib/config/api.dart
+git commit -m "Corregir URL de API movil para VPS"
+git push origin miguel
+```
+
+En el VPS, actualiza la API y el panel sin volver a ejecutar los datos de demostración ni `seed:admin`:
+
+```bash
+cd /var/www/Entregas_Trebol
+git checkout miguel
+git pull --ff-only origin miguel
+
+cd backend
+npm ci
+npx prisma migrate deploy
+npm run prisma:generate
+npm run build
+pm2 restart distribuidora-trebol-api --update-env
+
+cd ../frontend
+npm ci
+VITE_API_URL= npm run build
+
+curl -fsS http://127.0.0.1:3001/api/version
+curl -fsS http://169.58.255.180/api/version
+```
+
+Si el nombre del proceso no coincide, consúltalo con `pm2 list`. Nginx sirve `frontend/dist` directamente, así que no requiere recarga cuando solo cambia el código. El archivo `backend/.env` permanece en el VPS y no se sube a Git.
+
+El instalador de Electron se copia a la computadora Windows conectada a la impresora USB, y el APK se instala en el celular. Esos archivos se generan localmente en `electron-printer/dist` y `distribuidor_app/build/app/outputs/flutter-apk`; Git no los incluye.
 
 `deploy_produccion.sh` requiere una base ya existente y valores de PostgreSQL configurados en el propio script; para la primera instalación usa los pasos anteriores.
