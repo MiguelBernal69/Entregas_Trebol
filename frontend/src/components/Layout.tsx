@@ -61,9 +61,19 @@ export default function Layout({ children }: Props) {
         <div className="p-5 border-b">
           <div className="flex items-center justify-between">
             <div className="text-xl font-bold text-gray-800">🍀 Trébol</div>
-            <span className="text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded-md">
-              {APP_VERSION}
-            </span>
+            {user?.role === 'admin' ? (
+              <NavLink
+                to="/admin/auditoria-cargas"
+                title="Auditoría interna"
+                className="text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded-md hover:bg-blue-100 transition-colors"
+              >
+                {APP_VERSION}
+              </NavLink>
+            ) : (
+              <span className="text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded-md">
+                {APP_VERSION}
+              </span>
+            )}
           </div>
           <div className="text-xs text-gray-500 mt-1">{user?.name}</div>
           <span className="inline-block mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full capitalize">
