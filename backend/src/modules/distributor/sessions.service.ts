@@ -194,10 +194,10 @@ export const closeSession = async (sessionId: number, adminId?: number, notes?: 
     if (!session) throw new Error('Sesión no encontrada')
     if (session.status === 'cerrada') throw new Error('La sesión ya está cerrada')
 
-    // Generar reporte para el snapshot
+    // Generar reporte para el snapshot histórico antes de liberar la carga
     const report = await getSessionReport(session.distributorId)
 
-    return prisma.distributionSession.update({
+    const updatedSession = await prisma.distributionSession.update({
         where: { id: sessionId },
         data: {
             status: 'cerrada',
@@ -211,6 +211,22 @@ export const closeSession = async (sessionId: number, adminId?: number, notes?: 
             closedByAdmin: { select: { id: true, name: true } }
         }
     })
+
+    // Al cerrar la jornada, la camioneta se vacía en bodega:
+    // Los pedidos que NO se entregaron (se quedaron en 'asignado') regresan al almacén
+    // para que la próxima jornada inicie en CERO y no arrastre bultos viejos
+    await prisma.order.updateMany({
+        where: {
+            distributorId: session.distributorId,
+            status: 'asignado'
+        },
+        data: {
+            distributorId: null,
+            status: 'aceptado'
+        }
+    })
+
+    return updatedSession
 }
 
 /**

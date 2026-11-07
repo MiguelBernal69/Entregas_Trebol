@@ -338,7 +338,8 @@ function ReportContent({ report }: { report: any }) {
       {/* Stock en camioneta */}
       {stockEnCamioneta.length > 0 && (
         <div>
-          <h3 className="font-semibold text-gray-800 mb-3">Stock en Camioneta (para devolver)</h3>
+          <h3 className="font-semibold text-gray-800 mb-1">Stock Físico en Camioneta</h3>
+          <p className="text-xs text-gray-500 mb-3">Mercadería pendiente por entregar o devuelta por clientes</p>
           <div className="grid grid-cols-2 gap-2">
             {stockEnCamioneta.map((s: any, i: number) => (
               <div key={i} className="bg-orange-50 border border-orange-100 rounded-lg p-3 flex justify-between items-center">
