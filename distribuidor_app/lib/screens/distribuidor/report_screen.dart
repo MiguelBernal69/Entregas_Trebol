@@ -82,6 +82,35 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _endDay() async {
+    final resumen = _report?['resumen'] as Map<String, dynamic>?;
+    final pendientes = resumen?['pedidosPendientes'] as int? ?? 0;
+
+    if (pendientes > 0) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Pedidos Pendientes'),
+            ],
+          ),
+          content: Text(
+            'No puedes finalizar tu jornada porque aún tienes $pendientes pedido(s) sin entregar o resolver.\n\nDebes entregar o anular la visita de cada punto en tu lista antes de rendir cuentas.',
+            style: const TextStyle(fontSize: 14),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(

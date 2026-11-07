@@ -207,9 +207,11 @@ export default function DistributionSessions() {
             <h2 className="text-lg font-bold text-gray-800 mb-4">
               Cerrar Sesión #{closingId}
             </h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Al cerrar la sesión se guardará un snapshot del reporte actual.
-              El distribuidor podrá abrir una nueva sesión después.
+            <p className="text-sm text-gray-500 mb-2">
+              Al cerrar la sesión se guardará el snapshot del reporte y se contabilizarán las devoluciones a bodega.
+            </p>
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5 mb-4">
+              ⚠️ <strong>Regla de negocio:</strong> Todos los pedidos asignados deben haber sido entregados o anulados (0 entregado) para poder cerrar la jornada.
             </p>
             <textarea
               value={closeNotes}

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getMyOrders, getMyOrderById, deliverOrder, getActiveSession, openSession, getSessionReport, closeMySession } from './distributor.controller'
+import { getMyOrders, getMyOrderById, deliverOrder, rejectOrder, getActiveSession, openSession, getSessionReport, closeMySession } from './distributor.controller'
 import { authenticate } from '../../middlewares/auth.middleware'
 import { authorize } from '../../middlewares/role.middleware'
 
@@ -11,6 +11,7 @@ router.use(authenticate, authorize('distribuidor'))
 router.get('/orders', getMyOrders)
 router.get('/orders/:id', getMyOrderById)
 router.patch('/orders/:id/deliver', deliverOrder)
+router.patch('/orders/:id/reject', rejectOrder)
 
 // Sesiones de distribución (distribuidor)
 router.get('/session', getActiveSession)

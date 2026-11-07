@@ -74,4 +74,22 @@ class OrderService {
       throw Exception('Error HTTP ${res.statusCode}');
     }
   }
+
+  /// Anula la entrega de un pedido con 0 productos entregados (Bs. 0 dinero y 100% a devolución)
+  static Future<bool> rejectOrder(int orderId, {String? notes}) async {
+    final res = await http.patch(
+      Uri.parse('${Api.baseUrl}/distributor/orders/$orderId/reject'),
+      headers: await _headers(),
+      body: jsonEncode({'notes': notes ?? 'Entrega anulada / Cliente no recibió (0 entregado)'}),
+    );
+    if (res.statusCode == 200) return true;
+
+    try {
+      final data = jsonDecode(res.body);
+      throw Exception(data['message'] ?? 'Error al anular entrega');
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('Error HTTP ${res.statusCode}');
+    }
+  }
 }

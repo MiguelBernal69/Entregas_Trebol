@@ -210,6 +210,36 @@ export const deliverOrder = async (
     return updated
 }
 
+/**
+ * Anula la entrega de un pedido marcando todos los productos con cantidad entregada 0.
+ * Esto significa que el punto fue visitado/procesado, se cobró Bs. 0,
+ * y el 100% de los productos pasan al stock en camioneta como devueltos a bodega.
+ */
+export const rejectOrderDelivery = async (
+    orderId: number,
+    distributorId: number,
+    notes?: string
+) => {
+    const order = await prisma.order.findFirst({
+        where: { id: orderId, distributorId, status: 'asignado' },
+        include: { items: true }
+    })
+
+    if (!order) throw new Error('Pedido no encontrado, no te pertenece o ya fue procesado')
+
+    const deliveredItems = order.items.map(i => ({
+        orderItemId: i.id,
+        deliveredQuantity: 0
+    }))
+
+    return deliverOrder(
+        orderId,
+        distributorId,
+        deliveredItems,
+        notes || 'Entrega anulada / Cliente no recibió (0 entregado)'
+    )
+}
+
 // Helper para construir snapshot del pedido
 const buildSnapshot = async (orderId: number) => {
     const order = await prisma.order.findUnique({

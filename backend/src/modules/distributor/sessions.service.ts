@@ -194,7 +194,19 @@ export const closeSession = async (sessionId: number, adminId?: number, notes?: 
     if (!session) throw new Error('Sesión no encontrada')
     if (session.status === 'cerrada') throw new Error('La sesión ya está cerrada')
 
-    // Generar reporte para el snapshot histórico antes de liberar la carga
+    // 1. REGLA ESTRICTA: No se puede cerrar la jornada hasta que TODOS los puntos estén entregados o resueltos
+    const pendingOrders = await prisma.order.count({
+        where: {
+            distributorId: session.distributorId,
+            status: 'asignado'
+        }
+    })
+
+    if (pendingOrders > 0) {
+        throw new Error(`No se puede cerrar la jornada: aún quedan ${pendingOrders} pedido(s) pendientes por entregar o anular. Todos los puntos deben estar entregados o anulados antes de cerrar.`)
+    }
+
+    // Generar reporte para el snapshot histórico antes de cerrar
     const report = await getSessionReport(session.distributorId)
 
     const updatedSession = await prisma.distributionSession.update({
@@ -209,20 +221,6 @@ export const closeSession = async (sessionId: number, adminId?: number, notes?: 
         include: {
             distributor: { select: { id: true, name: true } },
             closedByAdmin: { select: { id: true, name: true } }
-        }
-    })
-
-    // Al cerrar la jornada, la camioneta se vacía en bodega:
-    // Los pedidos que NO se entregaron (se quedaron en 'asignado') regresan al almacén
-    // para que la próxima jornada inicie en CERO y no arrastre bultos viejos
-    await prisma.order.updateMany({
-        where: {
-            distributorId: session.distributorId,
-            status: 'asignado'
-        },
-        data: {
-            distributorId: null,
-            status: 'aceptado'
         }
     })
 

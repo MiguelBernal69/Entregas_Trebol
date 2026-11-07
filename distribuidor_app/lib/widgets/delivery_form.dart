@@ -334,6 +334,84 @@ class _DeliveryFormState extends State<DeliveryForm> {
               ),
             ),
 
+            const SizedBox(height: 12),
+
+            // Botón Anular Entrega (0 entregado)
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: () {
+                  final confirmCtrl = TextEditingController(text: 'Cliente no recibió / Tienda cerrada');
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Row(
+                        children: [
+                          Icon(Icons.cancel, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Anular Entrega'),
+                        ],
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Se marcará este punto con 0 productos entregados (Bs. 0 cobrados).\n\nToda la mercadería pasará al stock devuelto para almacén y el punto quedará cerrado.',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: confirmCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Motivo de anulación',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Volver'),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            final List<Map<String, int>> items = widget.order.items.map((i) => {
+                              'orderItemId': i.id,
+                              'deliveredQuantity': 0,
+                            }).toList();
+                            Navigator.pop(context, {
+                              'deliveredItems': items,
+                              'notes': confirmCtrl.text.trim().isEmpty
+                                  ? 'Entrega anulada (0 entregado)'
+                                  : confirmCtrl.text.trim(),
+                            });
+                          },
+                          child: const Text('Sí, Anular Entrega', style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.block, size: 18, color: Colors.red),
+                label: const Text(
+                  'Anular Visita / Rechazado (0 entregados)',
+                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.red.shade50,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(color: Colors.red.shade200),
+                  ),
+                ),
+              ),
+            ),
+
             const SizedBox(height: 16),
 
             // Botones

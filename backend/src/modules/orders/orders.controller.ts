@@ -166,3 +166,14 @@ export const getMyVisitedToday = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: error.message })
   }
 }
+
+export const rejectDeliveryByAdmin = async (req: AuthRequest, res: Response) => {
+  try {
+    const orderId = Number(req.params.id)
+    const { notes } = req.body
+    const order = await service.rejectOrderDeliveryByAdmin(orderId, req.user!.id, notes)
+    res.json({ message: 'Entrega anulada con 0 productos entregados', order })
+  } catch (error: any) {
+    res.status(400).json({ message: error.message })
+  }
+}

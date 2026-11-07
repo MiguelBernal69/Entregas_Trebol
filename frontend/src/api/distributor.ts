@@ -18,6 +18,10 @@ export const deliverDistributorOrder = async (
   return (await api.patch(`/distributor/orders/${id}/deliver`, data)).data
 }
 
+export const rejectDistributorOrder = async (id: number, notes?: string) => {
+  return (await api.patch(`/distributor/orders/${id}/reject`, { notes })).data
+}
+
 export const getDistributorSession = async () => {
   return (await api.get('/distributor/session')).data
 }

@@ -7,6 +7,7 @@ import {
   getDistributorSession,
   openDistributorSession,
   deliverDistributorOrder,
+  rejectDistributorOrder,
 } from '../../api/distributor'
 import type { Order } from '../../types'
 
@@ -103,6 +104,27 @@ export default function DistributorOrders() {
       }
     } catch (err: any) {
       alert(err.response?.data?.message || 'Error al registrar entrega')
+    } finally {
+      setSubmittingDelivery(false)
+    }
+  }
+
+  const handleAnularEntrega = async () => {
+    if (!deliverModalOrder) return
+    const motivo = window.prompt(
+      '¿Estás seguro de anular esta entrega? Se marcará como visitado con 0 productos entregados (Bs. 0 recaudados) y toda la mercadería pasará a devolución a almacén.\n\nEscribe el motivo:',
+      'Cliente no recibió pedido / Tienda cerrada'
+    )
+    if (motivo === null) return
+
+    setSubmittingDelivery(true)
+    try {
+      await rejectDistributorOrder(deliverModalOrder.id, motivo || 'Entrega anulada (0 entregado)')
+      setDeliverModalOrder(null)
+      await fetchOrders()
+      alert('⚠️ Entrega anulada: El punto quedó registrado con 0 entregados y la mercadería quedó en stock para devolver a bodega.')
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Error al anular entrega')
     } finally {
       setSubmittingDelivery(false)
     }
@@ -543,6 +565,16 @@ export default function DistributorOrders() {
                   className="w-full border border-gray-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
+
+              {/* Botón para Anular Entrega (0 entregado) */}
+              <button
+                type="button"
+                disabled={submittingDelivery}
+                onClick={handleAnularEntrega}
+                className="w-full py-2.5 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-black transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>🚫 Anular Entrega / Rechazado (0 entregados — todo a devolución)</span>
+              </button>
 
               <div className="flex items-center gap-3 pt-2">
                 <button

@@ -21,3 +21,7 @@ export const getAuditCargas = async (params?: { date?: string; startDate?: strin
   return (await api.get('/orders/audit-cargas', { params })).data
 }
 
+export const rejectOrderDeliveryByAdmin = async (id: number, notes?: string) => {
+  return (await api.patch(`/orders/${id}/reject-delivery`, { notes })).data
+}
+

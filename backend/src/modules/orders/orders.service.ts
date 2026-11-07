@@ -845,3 +845,46 @@ export const getAuditCargasService = async (filters: {
     }))
   }
 }
+
+/**
+ * Permite al administrador anular la entrega de un pedido asignado:
+ * coloca deliveredQuantity = 0 a todos sus ítems y lo marca como entrega_parcial con deliveredAt.
+ * Así cuenta con Bs. 0 cobrados y 100% de productos devueltos a almacén.
+ */
+export const rejectOrderDeliveryByAdmin = async (
+  orderId: number,
+  adminId: number,
+  notes?: string
+) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true }
+  })
+
+  if (!order) throw new Error('Pedido no encontrado')
+  if (order.status !== 'asignado') {
+    throw new Error('Solo se pueden anular entregas de pedidos que estén en estado asignado')
+  }
+
+  await prisma.$transaction(async (tx) => {
+    for (const it of order.items) {
+      await tx.orderItem.update({
+        where: { id: it.id },
+        data: { deliveredQuantity: 0 }
+      })
+    }
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'entrega_parcial',
+        deliveredAt: new Date(),
+        notes: notes || 'Entrega anulada por administración (0 productos entregados)'
+      }
+    })
+  })
+
+  await saveHistory(orderId, adminId, 'delivered', 'asignado', 'entrega_parcial')
+
+  return getOrderById(orderId)
+}
+

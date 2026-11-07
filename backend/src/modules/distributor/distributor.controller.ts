@@ -54,6 +54,20 @@ export const deliverOrder = async (req: AuthRequest, res: Response) => {
     }
 }
 
+export const rejectOrder = async (req: AuthRequest, res: Response) => {
+    try {
+        const notes = req.body.notes as string | undefined
+        const order = await service.rejectOrderDelivery(
+            Number(req.params.id),
+            req.user!.id,
+            notes
+        )
+        res.json({ message: 'Entrega anulada con 0 productos entregados', order })
+    } catch (error: any) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
 // ─── Sesiones de Distribución ──────────────────────────────
 
 export const getActiveSession = async (req: AuthRequest, res: Response) => {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Layout from '../../components/Layout'
 import OrderThermalReceiptModal from '../../components/OrderThermalReceiptModal'
 import BatchThermalReceiptModal from '../../components/BatchThermalReceiptModal'
-import { getOrders, assignOrders } from '../../api/orders'
+import { getOrders, assignOrders, rejectOrderDeliveryByAdmin } from '../../api/orders'
 import { getUsers } from '../../api/users'
 import { getRegions } from '../../api/regions'
 import type { Order, User } from '../../types'
@@ -508,6 +508,34 @@ export default function AdminOrders() {
                   )}
                 </div>
               </div>
+
+              {/* Botón Admin para Anular Entrega si está asignado */}
+              {detail.status === 'asignado' && (
+                <div className="border-t pt-4">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const motivo = window.prompt(
+                        '¿Anular la entrega de este pedido asignado? Se marcará con 0 productos entregados (Bs. 0 cobrados) y toda la mercadería pasará a devolución en la camioneta para poder cerrar el día.\n\nEscribe el motivo:',
+                        'Anulado por administración / Cliente no recibió'
+                      )
+                      if (!motivo) return
+                      try {
+                        await rejectOrderDeliveryByAdmin(detail.id, motivo)
+                        alert('✅ Entrega anulada exitosamente: 0 entregado, pasa a devolución de camioneta.')
+                        setDetail(null)
+                        fetchOrders()
+                      } catch (e: any) {
+                        alert(e.response?.data?.message || 'Error al anular entrega')
+                      }
+                    }}
+                    className="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <span>🚫</span>
+                    <span>Anular Entrega (0 entregados — todo a devolución)</span>
+                  </button>
+                </div>
+              )}
 
               {/* Botón Imprimir Boleta */}
               <div className="border-t pt-4">
