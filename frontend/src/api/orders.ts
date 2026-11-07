@@ -17,3 +17,7 @@ export const getDailyReport = async (params?: { date?: string; startDate?: strin
   return (await api.get('/orders/daily-report', { params: queryParams })).data
 }
 
+export const getAuditCargas = async (params?: { date?: string; startDate?: string; endDate?: string; distributorId?: number; sessionId?: number }) => {
+  return (await api.get('/orders/audit-cargas', { params })).data
+}
+

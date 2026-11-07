@@ -48,6 +48,22 @@ export const getDailyReport = async (req: AuthRequest, res: Response) => {
   }
 }
 
+export const getAuditCargas = async (req: AuthRequest, res: Response) => {
+  try {
+    const { date, startDate, endDate, distributorId, sessionId } = req.query
+    const result = await service.getAuditCargasService({
+      date: date as string | undefined,
+      startDate: startDate as string | undefined,
+      endDate: endDate as string | undefined,
+      distributorId: distributorId ? Number(distributorId) : undefined,
+      sessionId: sessionId ? Number(sessionId) : undefined
+    })
+    res.json(result)
+  } catch (error: any) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
 
 
 export const getOne = async (req: AuthRequest, res: Response) => {

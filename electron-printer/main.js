@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, session } = require('electron')
 const path = require('path')
 const { printReceiptGdi } = require('./gdi-printer')
 
@@ -270,6 +270,13 @@ ipcMain.handle('list-printers', async () => {
 })
 
 // ─── Ciclo de vida ────────────────────────────────────────────────────────────
-app.whenReady().then(createWindow)
+app.whenReady().then(async () => {
+  try {
+    await session.defaultSession.clearCache()
+  } catch (error) {
+    console.warn('[cache] no se pudo limpiar la caché del panel', error)
+  }
+  createWindow()
+})
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })

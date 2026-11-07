@@ -16,6 +16,7 @@ import AdminHistory from '../pages/admin/History'
 import AdminClients from '../pages/admin/Clients'
 import AssignRegions from '../pages/admin/AssignRegions'
 import DistributionSessions from '../pages/admin/DistributionSessions'
+import AuditCargas from '../pages/admin/AuditCargas'
 // import AdminInventory from '../pages/admin/InventoryReport' // reservado para futura activación
 
 // Preventista
@@ -53,6 +54,8 @@ export const AppRouter = () => {
         <Route path="/admin/clients" element={<ProtectedRoute roles={['admin']}><AdminClients /></ProtectedRoute>} />
         <Route path="/admin/assign-regions" element={<ProtectedRoute roles={['admin']}><AssignRegions /></ProtectedRoute>} />
         <Route path="/admin/sessions" element={<ProtectedRoute roles={['admin']}><DistributionSessions /></ProtectedRoute>} />
+        {/* Ruta privada oculta: solo accesible por URL directa para auditoría interna */}
+        <Route path="/admin/auditoria-cargas" element={<ProtectedRoute roles={['admin']}><AuditCargas /></ProtectedRoute>} />
         {/* Preventista */}
         <Route path="/preventista/clients" element={<ProtectedRoute roles={['preventista']}><PreventistaClients /></ProtectedRoute>} />
         <Route path="/preventista/orders" element={<ProtectedRoute roles={['preventista']}><PreventistaOrders /></ProtectedRoute>} />

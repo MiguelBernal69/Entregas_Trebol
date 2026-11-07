@@ -40,6 +40,7 @@ class _DeliveryFormState extends State<DeliveryForm> {
   void _calculateTotal() {
     double subtotal = 0;
     for (var item in widget.order.items) {
+      if (item.isBonification) continue;
       final text = _controllers[item.id]?.text ?? '0';
       final qty = int.tryParse(text) ?? 0;
       subtotal += qty * item.unitPrice;

@@ -54,7 +54,7 @@ function receiptBytes(order) {
   const add = value => lines.push(...wrap(value))
   const separator = '-'.repeat(WIDTH)
 
-  lines.push(center('DISTRIBUIDORA TREBOL'), center('Distribuidora y comercio externo'), center('Contacto'), center('73750520-67519917'), separator)
+  lines.push(center('DISTRIBUIDORA TREBOL'), center('Distribución y comercio externo'), center('Contacto'), center('73750520-67519917'), separator)
   add(`Pedido #${order.id}`)
   add(`Vendedor: ${order.preventista?.name || order.distributor?.name || 'Distribucion'}`)
   if (!Number.isNaN(date.getTime())) add(`Fecha: ${date.toLocaleString('es-BO')}`)

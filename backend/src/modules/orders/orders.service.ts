@@ -561,3 +561,284 @@ export const getTodayVisitedClientIds = async (preventistaId: number): Promise<n
   // Deduplica por si el mismo cliente tiene más de un pedido hoy
   return [...new Set(orders.map(o => o.clientId))]
 }
+
+// ─── Auditoría forense de cargas al distribuidor ──────────────────────────
+export const getAuditCargasService = async (filters: {
+  date?: string
+  startDate?: string
+  endDate?: string
+  distributorId?: number
+  sessionId?: number
+}) => {
+  const dateRange = getDateRange(
+    filters.date || (filters.sessionId ? 'all' : 'today'),
+    filters.startDate,
+    filters.endDate
+  )
+
+  // 1. Obtener sesiones correspondientes
+  const sessions = await prisma.distributionSession.findMany({
+    where: {
+      ...(filters.sessionId && { id: filters.sessionId }),
+      ...(filters.distributorId && { distributorId: filters.distributorId }),
+      ...(dateRange && {
+        openedAt: {
+          gte: dateRange.start,
+          lte: dateRange.end
+        }
+      })
+    },
+    include: {
+      distributor: { select: { id: true, name: true } },
+      closedByAdmin: { select: { id: true, name: true } }
+    },
+    orderBy: { id: 'desc' }
+  })
+
+  // 2. Procesar cada sesión
+  const auditSessions: any[] = []
+
+  for (const session of sessions) {
+    const sessionClosedAt = session.closedAt ?? new Date()
+
+    // Historial de asignaciones dentro del horario de la sesión
+    const historyAssigned = await prisma.orderHistory.findMany({
+      where: {
+        action: 'assigned',
+        createdAt: {
+          gte: session.openedAt,
+          lte: sessionClosedAt
+        }
+      },
+      select: { orderId: true }
+    })
+    const orderIdsFromHistory = historyAssigned.map(h => h.orderId)
+
+    const sessionOrders = await prisma.order.findMany({
+      where: {
+        distributorId: session.distributorId,
+        OR: [
+          {
+            deliveredAt: {
+              gte: session.openedAt,
+              lte: sessionClosedAt
+            }
+          },
+          ...(orderIdsFromHistory.length > 0 ? [{ id: { in: orderIdsFromHistory } }] : []),
+          ...(session.status === 'activa' ? [{ status: 'asignado' as OrderStatus }] : [])
+        ]
+      },
+      include: {
+        client: { select: { id: true, name: true, phone: true, address: true } },
+        preventista: { select: { id: true, name: true } },
+        items: {
+          include: {
+            product: { select: { id: true, name: true, unit: true, price: true } }
+          }
+        }
+      },
+      orderBy: { id: 'asc' }
+    })
+
+    let totalDineroAsignado = 0
+    let totalDineroCobradoReal = 0
+    let totalDineroSistemaAntiguo = 0
+    let pedidosEntregados = 0
+    let pedidosParciales = 0
+    let pedidosPendientes = 0
+
+    let totalBultosVenta = 0
+    let totalBultosBonif = 0
+    let totalFisicoEntregado = 0
+    let totalFisicoDevuelto = 0
+
+    const productMap = new Map<string, {
+      productId: number
+      name: string
+      unit: string
+      unitPrice: number
+      cargadoVenta: number
+      cargadoBonif: number
+      totalCargado: number
+      entregado: number
+      devuelto: number
+      montoCobrado: number
+    }>()
+
+    const formattedOrders = sessionOrders.map(ord => {
+      const isDelivered = ord.status === 'entregado' || ord.status === 'entrega_parcial'
+      if (ord.status === 'entregado') pedidosEntregados++
+      else if (ord.status === 'entrega_parcial') pedidosParciales++
+      else pedidosPendientes++
+
+      const subtotalRegular = ord.items
+        .filter(i => !i.isBonification)
+        .reduce((s, i) => s + i.unitPrice * i.quantity, 0)
+      const discount = Number(ord.discount || 0)
+      const totalNeto = Math.max(0, subtotalRegular - discount)
+      totalDineroAsignado += totalNeto
+
+      const subtotalEntregado = ord.items
+        .filter(i => !i.isBonification)
+        .reduce((s, i) => s + i.unitPrice * (i.deliveredQuantity ?? i.quantity), 0)
+      const netoCobrado = isDelivered ? Math.max(0, subtotalEntregado - discount) : 0
+      totalDineroCobradoReal += netoCobrado
+
+      if (isDelivered) {
+        totalDineroSistemaAntiguo += subtotalEntregado // El bug antiguo no restaba discount
+      }
+
+      for (const it of ord.items) {
+        const isBoni = Boolean(it.isBonification)
+        const deliv = isDelivered ? (it.deliveredQuantity ?? it.quantity) : 0
+        const dev = isDelivered ? Math.max(0, it.quantity - deliv) : 0
+
+        if (isBoni) {
+          totalBultosBonif += it.quantity
+        } else {
+          totalBultosVenta += it.quantity
+        }
+
+        if (isDelivered) {
+          totalFisicoEntregado += deliv
+          totalFisicoDevuelto += dev
+        }
+
+        const key = it.product.name
+        if (!productMap.has(key)) {
+          productMap.set(key, {
+            productId: it.productId,
+            name: it.product.name,
+            unit: it.product.unit,
+            unitPrice: it.unitPrice,
+            cargadoVenta: 0,
+            cargadoBonif: 0,
+            totalCargado: 0,
+            entregado: 0,
+            devuelto: 0,
+            montoCobrado: 0
+          })
+        }
+        const p = productMap.get(key)!
+        if (isBoni) {
+          p.cargadoBonif += it.quantity
+        } else {
+          p.cargadoVenta += it.quantity
+          p.montoCobrado += isDelivered ? deliv * it.unitPrice : 0
+        }
+        p.totalCargado += it.quantity
+        p.entregado += deliv
+        p.devuelto += dev
+      }
+
+      return {
+        id: ord.id,
+        status: ord.status,
+        client: ord.client,
+        preventista: ord.preventista,
+        createdAt: ord.createdAt,
+        deliveredAt: ord.deliveredAt,
+        discount,
+        subtotal: Math.round(subtotalRegular * 100) / 100,
+        totalNeto: Math.round(totalNeto * 100) / 100,
+        cobradoReal: Math.round(netoCobrado * 100) / 100,
+        itemsCount: ord.items.length,
+        bultosTotal: ord.items.reduce((s, i) => s + i.quantity, 0),
+        items: ord.items.map(it => ({
+          id: it.id,
+          productId: it.productId,
+          productName: it.product.name,
+          unit: it.product.unit,
+          quantity: it.quantity,
+          deliveredQuantity: it.deliveredQuantity,
+          unitPrice: it.unitPrice,
+          isBonification: it.isBonification
+        }))
+      }
+    })
+
+    const productosCargados = Array.from(productMap.values()).map(p => ({
+      ...p,
+      montoCobrado: Math.round(p.montoCobrado * 100) / 100
+    }))
+
+    const descuadreBugSistema = Math.max(0, Math.round((totalDineroSistemaAntiguo - totalDineroCobradoReal) * 100) / 100)
+
+    auditSessions.push({
+      session: {
+        id: session.id,
+        status: session.status,
+        openedAt: session.openedAt,
+        closedAt: session.closedAt,
+        notes: session.notes,
+        distributor: session.distributor,
+        closedByAdmin: session.closedByAdmin
+      },
+      resumenCarga: {
+        totalPedidos: sessionOrders.length,
+        pedidosEntregados,
+        pedidosParciales,
+        pedidosPendientes,
+        totalBultosVenta,
+        totalBultosBonif,
+        totalFisicoCargado: totalBultosVenta + totalBultosBonif,
+        totalFisicoEntregado,
+        totalFisicoDevuelto,
+        totalDineroAsignado: Math.round(totalDineroAsignado * 100) / 100,
+        totalDineroCobradoReal: Math.round(totalDineroCobradoReal * 100) / 100,
+        totalDineroSistemaAntiguo: Math.round(totalDineroSistemaAntiguo * 100) / 100,
+        descuadreBugSistema,
+        hayDiscrepancia: descuadreBugSistema > 0
+      },
+      productosCargados,
+      orders: formattedOrders
+    })
+  }
+
+  // 3. Pedidos creados por preventistas que quedaron sin camión en esa fecha
+  const pedidosSinAsignar = await prisma.order.findMany({
+    where: {
+      ...(dateRange && {
+        createdAt: {
+          gte: dateRange.start,
+          lte: dateRange.end
+        }
+      }),
+      OR: [
+        { distributorId: null },
+        { status: 'aceptado' }
+      ]
+    },
+    include: {
+      client: { select: { id: true, name: true, phone: true, address: true } },
+      preventista: { select: { id: true, name: true } },
+      items: {
+        include: {
+          product: { select: { id: true, name: true, unit: true, price: true } }
+        }
+      }
+    },
+    orderBy: { id: 'asc' }
+  })
+
+  return {
+    fechaConsulta: filters.date || 'today',
+    totalJornadas: auditSessions.length,
+    sessions: auditSessions,
+    pedidosSinAsignar: pedidosSinAsignar.map(o => ({
+      id: o.id,
+      client: o.client,
+      preventista: o.preventista,
+      status: o.status,
+      createdAt: o.createdAt,
+      discount: o.discount,
+      totalNeto: Math.max(0, o.items.filter(i => !i.isBonification).reduce((s, i) => s + i.unitPrice * i.quantity, 0) - (o.discount || 0)),
+      totalBultos: o.items.reduce((s, i) => s + i.quantity, 0),
+      items: o.items.map(it => ({
+        productName: it.product.name,
+        quantity: it.quantity,
+        isBonification: it.isBonification
+      }))
+    }))
+  }
+}

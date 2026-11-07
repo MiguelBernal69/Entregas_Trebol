@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getOne, getMap, create, update, changeStatus, assign, getMyVisitedToday, getDailyReport } from './orders.controller'
+import { getAll, getOne, getMap, create, update, changeStatus, assign, getMyVisitedToday, getDailyReport, getAuditCargas } from './orders.controller'
 import { authenticate } from '../../middlewares/auth.middleware'
 import { authorize } from '../../middlewares/role.middleware'
 
@@ -12,6 +12,7 @@ router.get('/map', authorize('admin'), getMap)
 router.post('/assign', authorize('admin'), assign)
 router.get('/my-visited-today', authorize('preventista'), getMyVisitedToday)
 router.get('/daily-report', authorize('admin', 'preventista'), getDailyReport)
+router.get('/audit-cargas', authorize('admin'), getAuditCargas)
 
 
 router.get('/', authorize('admin', 'preventista'), getAll)

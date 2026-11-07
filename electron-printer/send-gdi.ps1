@@ -72,7 +72,7 @@ function Add-Rule {
 }
 
 Add-Text ('DISTRIBUIDORA TR' + [char]0x00C9 + 'BOL') $fontHeader $left $width 'center' 0
-Add-Text 'Distribuidora y comercio externo' $fontSmall $left $width 'center' 0
+Add-Text ('Distribuci' + [char]0x00F3 + 'n y comercio externo') $fontSmall $left $width 'center' 0
 Add-Text 'Contacto' $fontSmall $left $width 'center' 0
 Add-Text '73750520-67519917' $fontSmall $left $width 'center' 1
 Add-Rule

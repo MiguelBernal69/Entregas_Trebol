@@ -85,16 +85,26 @@ export const getSessionReport = async (distributorId: number) => {
         if (status === 'entregado' || status === 'entrega_parcial') {
             puntosEntregados++
 
+            // Calcular el dinero realmente cobrado en este pedido (subtotal entregado menos descuento)
+            const orderSubtotalEntregado = order.items
+                .filter(i => !i.isBonification)
+                .reduce((sum, i) => sum + (i.deliveredQuantity ?? i.quantity) * i.unitPrice, 0)
+            const orderNetoRecaudado = Math.max(0, orderSubtotalEntregado - (order.discount || 0))
+            totalRecaudado += orderNetoRecaudado
+
             for (const item of order.items) {
+                const isBoni = item.isBonification === true
                 const delivered = item.deliveredQuantity ?? item.quantity
                 const devuelto = item.quantity - delivered
-                const monto = delivered * item.unitPrice
-                totalRecaudado += monto
+                const monto = isBoni ? 0 : delivered * item.unitPrice
 
-                const key = item.product.name
+                // Mantener identificador separado para bonificaciones para no mezclar unidades pagadas con regalos
+                const key = isBoni ? `[BONIF] ${item.product.name}` : item.product.name
+                const displayName = isBoni ? `🎁 ${item.product.name} (Bonificación)` : item.product.name
+
                 if (!productosVendidos[key]) {
                     productosVendidos[key] = {
-                        name: item.product.name,
+                        name: displayName,
                         unit: item.product.unit,
                         cantidadPedida: 0,
                         cantidadEntregada: 0,
@@ -105,39 +115,43 @@ export const getSessionReport = async (distributorId: number) => {
                 productosVendidos[key].cantidadPedida += item.quantity
                 productosVendidos[key].cantidadEntregada += delivered
                 productosVendidos[key].cantidadDevuelta += devuelto
-                productosVendidos[key].monto += monto
+                productosVendidos[key].monto = Math.round((productosVendidos[key].monto + monto) * 100) / 100
+
+                // Si hubo devolución en cliente, las unidades vuelven al stock físico en camioneta
+                if (devuelto > 0) {
+                    const truckKey = key
+                    const truckName = displayName
+                    if (!stockEnCamioneta[truckKey]) {
+                        stockEnCamioneta[truckKey] = {
+                            name: truckName,
+                            unit: item.product.unit,
+                            cantidad: 0
+                        }
+                    }
+                    stockEnCamioneta[truckKey].cantidad += devuelto
+                }
             }
         } else if (status === 'asignado') {
             pedidosPendientes++
 
             for (const item of order.items) {
-                const key = item.product.name
-                if (!stockEnCamioneta[key]) {
-                    stockEnCamioneta[key] = {
-                        name: item.product.name,
+                const isBoni = item.isBonification === true
+                const truckKey = isBoni ? `[BONIF] ${item.product.name}` : item.product.name
+                const truckDisplayName = isBoni ? `🎁 ${item.product.name} (Bonificación)` : item.product.name
+
+                if (!stockEnCamioneta[truckKey]) {
+                    stockEnCamioneta[truckKey] = {
+                        name: truckDisplayName,
                         unit: item.product.unit,
                         cantidad: 0
                     }
                 }
-                stockEnCamioneta[key].cantidad += item.quantity
+                stockEnCamioneta[truckKey].cantidad += item.quantity
             }
         }
     }
 
-    // Agregar producto devuelto al stock en camioneta
-    for (const key of Object.keys(productosVendidos)) {
-        const p = productosVendidos[key]
-        if (p.cantidadDevuelta > 0) {
-            if (!stockEnCamioneta[key]) {
-                stockEnCamioneta[key] = {
-                    name: p.name,
-                    unit: p.unit,
-                    cantidad: 0
-                }
-            }
-            stockEnCamioneta[key].cantidad += p.cantidadDevuelta
-        }
-    }
+    totalRecaudado = Math.round(totalRecaudado * 100) / 100
 
     return {
         session: {

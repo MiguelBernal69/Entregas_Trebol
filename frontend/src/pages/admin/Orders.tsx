@@ -265,31 +265,63 @@ export default function AdminOrders() {
         </div>
 
         {/* Resumen de carga al camión */}
-        {selected.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
-              <span>📦</span> Total a cargar al camión ({selected.length} pedidos seleccionados)
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {Object.entries(
-                orders.filter(o => selected.includes(o.id)).reduce((acc, order) => {
-                  order.items.forEach(item => {
-                    const name = item.product.name
-                    acc[name] = (acc[name] || 0) + item.quantity
-                  })
-                  return acc
-                }, {} as Record<string, number>)
-              ).map(([productName, qty]) => (
-                <div key={productName} className="bg-white px-3 py-2 rounded-lg shadow-sm border border-blue-100 flex items-center gap-2">
-                  <span className="text-sm text-gray-700">{productName}</span>
-                  <span className="text-sm font-bold text-blue-700 px-2 flex items-center bg-blue-100 rounded">
-                    x{qty}
-                  </span>
+        {selected.length > 0 && (() => {
+          const selectedOrders = orders.filter(o => selected.includes(o.id))
+          const productMap: Record<string, { regular: number; bonif: number; total: number }> = {}
+          let totalBultos = 0
+          let totalCobrar = 0
+
+          selectedOrders.forEach(order => {
+            const regularSubtotal = order.items
+              .filter(i => !i.isBonification)
+              .reduce((sum, i) => sum + i.unitPrice * i.quantity, 0)
+            const neto = Math.max(0, regularSubtotal - (order.discount || 0))
+            totalCobrar += neto
+
+            order.items.forEach(item => {
+              const name = item.product.name
+              if (!productMap[name]) {
+                productMap[name] = { regular: 0, bonif: 0, total: 0 }
+              }
+              if (item.isBonification) {
+                productMap[name].bonif += item.quantity
+              } else {
+                productMap[name].regular += item.quantity
+              }
+              productMap[name].total += item.quantity
+              totalBultos += item.quantity
+            })
+          })
+
+          return (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200 pb-2.5">
+                <h3 className="text-sm font-bold text-blue-900 flex items-center gap-2">
+                  <span>📦</span> Total a cargar al camión ({selected.length} pedidos seleccionados)
+                </h3>
+                <div className="flex items-center gap-4 text-xs font-bold text-blue-900">
+                  <span>Total bultos/uds: <strong className="text-blue-700 text-sm">{totalBultos}</strong></span>
+                  <span>Total a cobrar: <strong className="text-emerald-700 text-sm">Bs. {totalCobrar.toFixed(2)}</strong></span>
                 </div>
-              ))}
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {Object.entries(productMap).map(([productName, data]) => (
+                  <div key={productName} className="bg-white px-3 py-2 rounded-lg shadow-sm border border-blue-100 flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-800">{productName}</span>
+                    <span className="text-sm font-bold text-blue-700 px-2 flex items-center bg-blue-100 rounded">
+                      x{data.total}
+                    </span>
+                    {data.bonif > 0 && (
+                      <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-semibold">
+                        {data.regular} venta + 🎁 {data.bonif} bonif
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Tabla */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
