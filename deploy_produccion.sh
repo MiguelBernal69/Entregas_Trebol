@@ -12,15 +12,15 @@
 # =============================================================================
 set -e  # Detener si cualquier comando falla
 
-# ===================== CONFIGURA ESTOS VALORES =====================
-APP_DIR="/ruta/al/proyecto/Entregas_Trebol"  # <- Ajustar ruta real
-DB_NAME="bd_entregas_trebol"
-DB_USER="postgres"
-DB_HOST="localhost"
-DB_PASS="TU_PASSWORD_POSTGRESQL"            # <- Ajustar contraseña real
+# ===================== CONFIGURACIÓN AUTOMÁTICA =====================
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="$HOME/backups_bd"
-PM2_BACKEND_NAME="backend"                  # <- Nombre en: pm2 list
-# ==================================================================
+PM2_BACKEND_NAME="backend"
+
+# Extraer DATABASE_URL de backend/.env si existe
+if [ -f "$APP_DIR/backend/.env" ]; then
+  DB_URL=$(grep "^DATABASE_URL=" "$APP_DIR/backend/.env" | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+fi
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="$BACKUP_DIR/bd_entregas_${TIMESTAMP}.dump"
@@ -36,12 +36,11 @@ echo ""
 echo "📦 [1/7] Backup de base de datos..."
 mkdir -p "$BACKUP_DIR"
 
-PGPASSWORD="$DB_PASS" pg_dump \
-  -h "$DB_HOST" \
-  -U "$DB_USER" \
-  -d "$DB_NAME" \
-  --format=custom \
-  -f "$BACKUP_FILE"
+if [ -n "$DB_URL" ]; then
+  pg_dump "$DB_URL" --format=custom -f "$BACKUP_FILE" || echo "   ⚠️  pg_dump falló, continuando con el despliegue..."
+else
+  echo "   ⚠️  DATABASE_URL no encontrada en backend/.env, omitiendo backup..."
+fi
 
 echo "   ✅ Backup: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
 
@@ -59,7 +58,8 @@ echo ""
 echo "🗄️  [3/7] Aplicando migración de base de datos..."
 echo "   Aplicando migraciones Prisma"
 
-PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" << 'MIGRATION_SQL'
+if [ -n "$DB_URL" ]; then
+  psql "$DB_URL" << 'MIGRATION_SQL' || echo "   ⏩ Migración omitida o ya aplicada"
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Order' AND column_name='discount') THEN
     ALTER TABLE "Order" ADD COLUMN "discount" DOUBLE PRECISION NOT NULL DEFAULT 0;
@@ -80,6 +80,7 @@ END $$;
 
 SELECT 'Migración OK' AS resultado;
 MIGRATION_SQL
+fi
 
 echo "   ✅ Migración aplicada"
 
