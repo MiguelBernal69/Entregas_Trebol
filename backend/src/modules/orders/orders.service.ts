@@ -776,6 +776,8 @@ export const getAuditCargasService = async (filters: {
       },
       resumenCarga: {
         totalPedidos: sessionOrders.length,
+        totalClientes: new Set(sessionOrders.map(o => o.clientId)).size,
+        clientesEntregados: new Set(sessionOrders.filter(o => o.status === 'entregado' || o.status === 'entrega_parcial').map(o => o.clientId)).size,
         pedidosEntregados,
         pedidosParciales,
         pedidosPendientes,
@@ -784,6 +786,7 @@ export const getAuditCargasService = async (filters: {
         totalFisicoCargado: totalBultosVenta + totalBultosBonif,
         totalFisicoEntregado,
         totalFisicoDevuelto,
+        totalDescuentosPreventista: Math.round(sessionOrders.reduce((s, o) => s + Number(o.discount || 0), 0) * 100) / 100,
         totalDineroAsignado: Math.round(totalDineroAsignado * 100) / 100,
         totalDineroCobradoReal: Math.round(totalDineroCobradoReal * 100) / 100,
         totalDineroSistemaAntiguo: Math.round(totalDineroSistemaAntiguo * 100) / 100,
